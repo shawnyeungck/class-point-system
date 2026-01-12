@@ -84,16 +84,12 @@
     .marquee-item { margin-right: 30px; font-weight: 500; }
     @keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 
-    /* 關鍵修復：Login Overlay 全螢幕置中 */
+    /* Login Overlay (Fixed) */
     .login-overlay { 
-      position: fixed; 
-      top: 0; left: 0; width: 100%; height: 100%; 
-      background: rgba(20, 20, 40, 0.6); 
-      backdrop-filter: blur(8px); 
-      z-index: 10000; 
-      display: none; 
-      justify-content: center; 
-      align-items: center; 
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(20, 20, 40, 0.6); backdrop-filter: blur(8px); 
+      z-index: 10000; display: none; 
+      justify-content: center; align-items: center; 
     }
     .login-overlay-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border-radius: 30px; padding: 2.5rem; width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
 
@@ -178,7 +174,7 @@
   <div class="marquee-wrapper"><div id="marqueeContent" class="marquee-content"></div></div>
 </div>
 
-<!-- Login Overlay (Fixed CSS) -->
+<!-- Login Overlay (FIXED) -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-overlay-content">
     <h4 class="text-center fw-bold mb-4">教師登入</h4>
@@ -303,7 +299,7 @@
   </div>
 </div></div></div>
 
-<!-- Edit Log Modal (Updated: Added Item Input) -->
+<!-- Edit Log Modal (NEW) -->
 <div class="modal fade" id="editLogModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
   <div class="modal-header"><h5 class="modal-title fw-bold">✏️ 編輯紀錄</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
   <div class="modal-body">
@@ -618,12 +614,16 @@
   // ==========================================
   function updateScores() {
     const btn = document.getElementById('updateScoresButton'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-    callApi('getLatestScores')
-      .then(res => {
+    // 改為呼叫 getInitialData 以獲取最新完整資料 (含 Log)
+    callApi('getInitialData')
+      .then(data => {
         btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> 更新';
-        res.forEach(r => { const s = allStudents.find(x => x["姓名"]===r.name); if(s) { s["總得分"]=r.score; s["累積分數"]=r.cumulative; } });
+        if(data.students) allStudents = data.students;
+        if(data.logs) allLogs = data.logs;
+        if(data.monthlyKings) monthlyKings = data.monthlyKings;
+        
         if(isSorted) allStudents.sort((a,b)=>(b["累積分數"]||0)-(a["累積分數"]||0));
-        renderStudents();
+        renderPage();
       })
       .catch(e => { alert("更新失敗: " + e); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> 更新'; });
   }
@@ -645,11 +645,15 @@
     const btn = document.getElementById('confirmScoreBtn'); btn.disabled = true; btn.innerHTML = "傳送中...";
     
     callApi('addScoreRecord', { teacherAccount: currentTeacher["帳號"], targetType: finalTargetType, targetName: finalTargetName, item: item, score: score })
-      .then(res => {
+      .then(data => {
           closeScoreModal(); btn.disabled = false; btn.innerHTML = "送出";
-          res.forEach(r => { const s = allStudents.find(x => x["姓名"]===r.name); if(s) { s["總得分"] = r.score; s["累積分數"] = r.cumulative; } });
+          // 全面更新資料
+          if(data.students) allStudents = data.students;
+          if(data.logs) allLogs = data.logs;
+          if(data.monthlyKings) monthlyKings = data.monthlyKings;
+
           if(isSorted) allStudents.sort((a,b)=>(b["累積分數"]||0)-(a["累積分數"]||0));
-          renderStudents();
+          renderPage();
       })
       .catch(e => { alert("錯誤：" + e); btn.disabled = false; btn.innerHTML = "送出"; });
   }
@@ -658,7 +662,15 @@
     const acc = document.getElementById('loginAccount').value.trim();
     const pwd = document.getElementById('loginPassword').value.trim();
     const t = teacherList.find(x => String(x['帳號'])===acc && String(x['密碼'])===pwd);
-    if(t) { currentTeacher = t; hideLoginOverlay(); renderPage(); } else alert("帳號或密碼錯誤");
+    if(t) { 
+      currentTeacher = t; 
+      hideLoginOverlay(); 
+      renderPage(); 
+      // 強制刷新紀錄表以顯示編輯按鈕
+      if(document.querySelector('.nav-link.active').dataset.type === 'log') {
+        filterLogs();
+      }
+    } else alert("帳號或密碼錯誤");
   }
 
   function logoutTeacher() { currentTeacher = null; isSorted = false; document.getElementById('sortScoresButton').innerHTML = '<i class="fas fa-sort-amount-down"></i> 排序'; renderPage(); }
