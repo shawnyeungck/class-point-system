@@ -1,0 +1,812 @@
+/* =========================================
+   1. 基礎設定 & 變數 (Root Variables)
+   ========================================= */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --primary-color: #FF6B6B;
+  --secondary-color: #4ECDC4;
+  --accent-color: #FFE66D;
+  --dark-color: #2D3E50;
+  --text-color: #1a2a3a;
+  --tier1-color: #A0E7E5;
+  --tier2-color: #B4F8C8;
+  --tier3-color: #FBE7C6;
+  --tier4-color: #FFAEBC;
+  --tier5-color: #D4A5A5;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  padding: 80px 0 0 0;
+  margin: 0;
+  font-family: 'Noto Sans TC', sans-serif;
+  min-height: 100vh;
+  color: var(--text-color);
+  background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+  background-size: 400% 400%;
+  animation: gradientBG 15s ease infinite;
+  overflow-x: hidden;
+}
+
+@keyframes gradientBG {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+h1, h2, h3, h4, h5, h6, button {
+  font-family: 'Baloo 2', 'Noto Sans TC', cursive, sans-serif;
+}
+
+/* =========================================
+   2. 控制面板 (Control Panel)
+   ========================================= */
+.control-panel {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  z-index: 1000;
+  padding: 10px 20px;
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.teacher-info {
+  font-size: 1rem;
+  font-weight: 700;
+  display: none;
+  color: var(--dark-color);
+  background: rgba(255, 255, 255, 0.5);
+  padding: 5px 15px;
+  border-radius: 20px;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.modern-btn {
+  border: none;
+  border-radius: 15px;
+  padding: 8px 16px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.modern-btn:active {
+  transform: scale(0.95);
+}
+
+.btn-sort { background: linear-gradient(135deg, #FFE66D, #FFD23F); color: #5a4b00; }
+.btn-update { background: linear-gradient(135deg, #4ECDC4, #2CB5AC); color: white; }
+.btn-login { background: linear-gradient(135deg, #FF6B6B, #FF5252); color: white; }
+.btn-logout { background: rgba(255, 255, 255, 0.8); color: var(--dark-color); display: none; }
+
+@media (max-width: 575px) {
+  .control-panel { flex-wrap: wrap; padding: 10px; }
+  .control-buttons { width: 100%; justify-content: space-around; margin-top: 5px; }
+  .modern-btn { flex: 1; justify-content: center; }
+  .teacher-info { width: 100%; text-align: center; }
+}
+
+/* =========================================
+   3. 分頁與篩選 (Tabs & Filters)
+   ========================================= */
+#categoryTabs {
+  justify-content: center;
+  border: none;
+  margin: 20px 0;
+  gap: 15px;
+}
+
+.glass-tab {
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 30px !important;
+  padding: 10px 25px;
+  font-weight: 700;
+  color: var(--dark-color);
+  backdrop-filter: blur(5px);
+  transition: all 0.3s;
+}
+
+.glass-tab.active {
+  background: white;
+  color: var(--primary-color);
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+}
+
+#filterContainer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 25px;
+  padding: 0 10px;
+}
+
+.filter-btn {
+  background: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-btn.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+/* =========================================
+   4. 學生卡片 (Student Cards)
+   ========================================= */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  padding: 10px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+#groupSection {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+}
+
+.student-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.3s;
+  cursor: pointer;
+}
+
+.student-card:hover {
+  transform: translateY(-8px);
+}
+
+.image-container {
+  width: 100%;
+  aspect-ratio: 1/1;
+  border-radius: 24px;
+  overflow: hidden;
+  background: white;
+  border: 4px solid rgba(255, 255, 255, 0.8);
+  margin-bottom: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.student-square {
+  width: 100%;
+  height: 100%;
+}
+
+.frame-gold { border: 6px solid #FFD700 !important; }
+.frame-silver { border: 6px solid #C0C0C0 !important; }
+.frame-bronze { border: 6px solid #CD7F32 !important; }
+
+.king-pill {
+  background: linear-gradient(135deg, #FFD700, #FDB931);
+  color: #8a6d3b;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-weight: 900;
+  margin-bottom: 5px;
+  border: 2px solid #fff;
+  animation: popIn 0.5s;
+}
+
+@keyframes popIn {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.stats-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.score-pill, .cumulative-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-weight: 800;
+  font-size: 1.3rem;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.score-pill { color: #E63946; }
+.cumulative-pill { color: #1D3557; }
+
+.info-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.info-pill {
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px 16px;
+  border-radius: 20px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.student-name-pill {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #2D3E50;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.title-pill {
+  color: #d35400;
+  border: 1px solid #FFD700;
+  background: #fffbe6;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.medal-wrapper {
+  position: absolute;
+  top: -8px;
+  right: 10px;
+  width: 50px;
+  height: 60px;
+  z-index: 20;
+  filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* =========================================
+   5. 小組、禮物、稱號 (Groups, Gifts, Titles)
+   ========================================= */
+.group-button {
+  border-radius: 24px;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  cursor: pointer;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 4px solid rgba(255, 255, 255, 0.4);
+}
+
+.group-name {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-bottom: 15px;
+}
+
+.gift-row {
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 24px;
+  padding: 15px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.gift-category-label {
+  flex: 0 0 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-right: 20px;
+  border: 5px solid rgba(255, 255, 255, 0.8);
+  font-weight: 800;
+}
+
+.gift-list-container {
+  flex: 1;
+  display: flex;
+  gap: 15px;
+  overflow-x: auto;
+  padding: 10px 5px;
+}
+
+.gift-card {
+  flex: 0 0 150px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 18px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gift-img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+}
+
+.title-card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 20px;
+  padding: 20px;
+  text-align: center;
+  border: 4px solid rgba(255, 255, 255, 0.6);
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.title-score-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 5px 15px;
+  border-radius: 15px;
+  font-weight: 800;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+
+.title-name-large {
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.title-holders-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.title-holder-badge {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+}
+
+/* =========================================
+   6. 紀錄表與跑馬燈 (Logs & Marquee)
+   ========================================= */
+#logContainer {
+  max-width: 1000px;
+  margin: 20px auto;
+  padding: 25px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 25px;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.log-table th {
+  padding: 15px;
+  text-align: left;
+  background: #e9ecef;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.log-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.log-score.positive { color: #198754; font-weight: 800; }
+.log-score { color: #dc3545; font-weight: 800; }
+
+.marquee-container {
+  max-width: 800px;
+  margin: 10px auto 15px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 30px;
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.marquee-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: scrollLeft 25s linear infinite;
+  white-space: nowrap;
+}
+
+.marquee-item {
+  margin-right: 30px;
+  font-weight: 500;
+}
+
+@keyframes scrollLeft {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+/* =========================================
+   7. 登入介面 (Login Overlay) - 修正版
+   ========================================= */
+.login-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  background: rgba(20, 20, 40, 0.6); 
+  backdrop-filter: blur(8px); 
+  z-index: 10000; 
+  display: none; 
+  justify-content: center; 
+  align-items: center; 
+}
+
+.login-overlay-content { 
+  background: rgba(255, 255, 255, 0.95); 
+  backdrop-filter: blur(25px); 
+  border-radius: 30px; 
+  padding: 2.5rem; 
+  width: 90%; 
+  max-width: 400px; 
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25); 
+}
+
+/* =========================================
+   8. 其他元件 (Loading, Timer, Modal)
+   ========================================= */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(15px);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  color: white;
+}
+
+.timer-box {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 30px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.timer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(5px);
+  z-index: 11000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.timer-display {
+  font-size: 5rem;
+  font-weight: 800;
+  margin: 10px 0;
+}
+
+.modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 30px;
+  backdrop-filter: blur(20px);
+}
+
+.ranking-visuals {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.ranking-student-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.ranking-score {
+  background: var(--secondary-color);
+  color: white;
+  padding: 5px 20px;
+  border-radius: 20px;
+  font-weight: 800;
+}
+
+/* =========================================
+   9. 骰子與幸運抽籤 (Dice & Lucky Draw)
+   ========================================= */
+.dice-selector {
+  cursor: pointer;
+  padding: 15px 25px;
+  border-radius: 20px;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.4);
+  transition: all 0.3s;
+  color: #555;
+  opacity: 0.7;
+}
+
+.dice-selector.active {
+  border-color: var(--primary-color);
+  background: white;
+  color: var(--primary-color);
+  opacity: 1;
+  box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+  font-weight: bold;
+}
+
+.dice-stage {
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+}
+
+.dice-box {
+  width: 150px;
+  height: 150px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 5rem;
+  font-weight: 800;
+  color: white;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.5s;
+  position: relative;
+}
+
+.dice-d6 {
+  background: linear-gradient(135deg, #FF6B6B, #EE5253);
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(238, 82, 83, 0.4);
+  border: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+.dice-d20 {
+  width: 160px;
+  height: 185px;
+  background: linear-gradient(135deg, #4ECDC4, #2CB5AC);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border-radius: 0;
+  filter: drop-shadow(0 10px 15px rgba(44, 181, 172, 0.4));
+}
+
+.dice-d20::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  background: transparent;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  z-index: 1;
+}
+
+.dice-shaking { animation: shakeDice 0.5s infinite; }
+.dice-pop { animation: popNum 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+@keyframes shakeDice {
+  0% { transform: rotate(0deg) translate(0, 0); }
+  25% { transform: rotate(15deg) translate(10px, -10px); }
+  50% { transform: rotate(0deg) translate(0, 20px) scale(0.9); }
+  75% { transform: rotate(-15deg) translate(-10px, -10px); }
+  100% { transform: rotate(0deg) translate(0, 0); }
+}
+
+@keyframes popNum {
+  from { transform: scale(0.5); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.lucky-stage {
+  max-width: 600px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.4);
+  padding: 40px;
+  border-radius: 30px;
+  text-align: center;
+}
+
+.lucky-card {
+  background: white;
+  border-radius: 25px;
+  padding: 20px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+  margin-bottom: 20px;
+}
+
+.lucky-img-box {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin: 0 auto 20px;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid var(--secondary-color);
+}
+
+.lucky-img-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lucky-name { font-size: 2rem; font-weight: 800; }
+
+.exclusion-panel {
+  background: rgba(255, 255, 255, 0.6);
+  padding: 20px;
+  border-radius: 30px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.exclusion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 10px;
+}
+
+.exclusion-item {
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.exclusion-item img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.exclusion-item.excluded {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.exclusion-item.excluded::after {
+  content: "✖";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: red;
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+/* =========================================
+   10. 金句與批次選擇 (Bible & Batch)
+   ========================================= */
+.bible-card-main {
+  background: linear-gradient(135deg, #fff, #f3f4f6);
+  padding: 40px;
+  border-radius: 25px;
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.bible-text-large {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 20px;
+  font-family: 'Noto Serif TC', serif;
+}
+
+.bible-ref-large {
+  color: #666;
+  font-weight: 600;
+  border-top: 2px solid var(--primary-color);
+  display: inline-block;
+  padding-top: 10px;
+}
+
+.bible-card-sm {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 15px;
+  border-radius: 15px;
+  height: 100%;
+}
+
+#groupBatchSelector {
+  background: rgba(0, 0, 0, 0.03);
+  padding: 10px;
+  border-radius: 15px;
+  margin-bottom: 15px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.batch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 10px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.batch-item {
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.batch-item img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.batch-item.excluded {
+  opacity: 0.6;
+  filter: grayscale(1);
+}
+
+.batch-item.excluded::after {
+  content: "✖";
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: red;
+  font-size: 2rem;
+}
