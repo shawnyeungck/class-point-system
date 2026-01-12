@@ -1,82 +1,175 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>真道非華語課堂加分系統 (Web版)</title>
   
-  <!-- 外部套件 (Bootstrap, Fonts, Icons) -->
+  <!-- Bootstrap 5 CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Baloo+2:wght@600;700;800&family=Noto+Serif+TC:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Icons -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- 連結你的 CSS 檔案 -->
-  <link rel="stylesheet" href="style.css">
+  <style>
+    /* ================= 樣式區 (CSS) ================= */
+    :root { --glass-bg: rgba(255,255,255,0.25); --primary-color: #FF6B6B; --secondary-color: #4ECDC4; --accent-color: #FFE66D; --dark-color: #2D3E50; --text-color: #1a2a3a; --tier1-color: #A0E7E5; --tier2-color: #B4F8C8; --tier3-color: #FBE7C6; --tier4-color: #FFAEBC; --tier5-color: #D4A5A5; }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { padding: 80px 0 0 0; margin: 0; font-family: 'Noto Sans TC', sans-serif; min-height: 100vh; color: var(--text-color); background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab); background-size: 400% 400%; animation: gradientBG 15s ease infinite; overflow-x: hidden; }
+    @keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    h1, h2, h3, h4, h5, h6, button { font-family: 'Baloo 2', 'Noto Sans TC', cursive, sans-serif; }
+
+    /* UI Components */
+    .control-panel { position: fixed; top: 10px; left: 10px; right: 10px; z-index: 1000; padding: 10px 20px; border-radius: 25px; display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.6); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.6); box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+    .teacher-info { font-size: 1rem; font-weight: 700; display: none; color: var(--dark-color); background: rgba(255,255,255,0.5); padding: 5px 15px; border-radius: 20px; }
+    .control-buttons { display: flex; gap: 10px; margin-left: auto; }
+    .modern-btn { border: none; border-radius: 15px; padding: 8px 16px; font-weight: 700; font-size: 0.95rem; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 5px; }
+    .modern-btn:active { transform: scale(0.95); }
+    .btn-login { background: linear-gradient(135deg, #FF6B6B, #FF5252); color: white; }
+    .btn-logout { background: rgba(255,255,255,0.8); color: var(--dark-color); display: none; }
+    
+    @media (max-width: 575px) { .control-panel { flex-wrap: wrap; padding: 10px; } .control-buttons { width: 100%; justify-content: space-around; margin-top: 5px; } .modern-btn { flex: 1; justify-content: center; } .teacher-info { width: 100%; text-align: center; } }
+
+    /* Tabs & Filters */
+    #categoryTabs { justify-content: center; border: none; margin: 20px 0; gap: 15px; }
+    .glass-tab { background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.4); border-radius: 30px !important; padding: 10px 25px; font-weight: 700; color: var(--dark-color); backdrop-filter: blur(5px); transition: all 0.3s; }
+    .glass-tab.active { background: white; color: var(--primary-color); transform: scale(1.05); box-shadow: 0 5px 15px rgba(255,107,107,0.3); }
+    #filterContainer { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 25px; padding: 0 10px; }
+    .filter-btn { background: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; padding: 6px 16px; font-weight: 600; cursor: pointer; }
+    .filter-btn.active { background: var(--primary-color); color: white; }
+
+    /* Cards */
+    .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; padding: 10px 20px; max-width: 1400px; margin: 0 auto; }
+    #groupSection { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important; }
+    .student-card { position: relative; display: flex; flex-direction: column; align-items: center; transition: transform 0.3s; cursor: pointer; }
+    .student-card:hover { transform: translateY(-8px); }
+    .image-container { width: 100%; aspect-ratio: 1/1; border-radius: 24px; overflow: hidden; background: white; border: 4px solid rgba(255,255,255,0.8); margin-bottom: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    .image-container img { width: 100%; height: 100%; object-fit: cover; }
+    .student-square { width: 100%; height: 100%; }
+    .frame-gold { border: 6px solid #FFD700 !important; } .frame-silver { border: 6px solid #C0C0C0 !important; } .frame-bronze { border: 6px solid #CD7F32 !important; }
+    .king-pill { background: linear-gradient(135deg, #FFD700, #FDB931); color: #8a6d3b; padding: 5px 15px; border-radius: 20px; font-weight: 900; margin-bottom: 5px; border: 2px solid #fff; animation: popIn 0.5s; }
+    @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
+    .stats-row { display: flex; gap: 15px; margin-bottom: 8px; }
+    .score-pill, .cumulative-pill { display: flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 16px; font-weight: 800; font-size: 1.3rem; background: rgba(255,255,255,0.85); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .score-pill { color: #E63946; } .cumulative-pill { color: #1D3557; }
+    .info-container { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
+    .info-pill { background: rgba(255,255,255,0.7); padding: 4px 16px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .student-name-pill { font-size: 1.4rem; font-weight: 800; color: #2D3E50; background: rgba(255,255,255,0.9); }
+    .title-pill { color: #d35400; border: 1px solid #FFD700; background: #fffbe6; font-weight: 700; font-size: 0.95rem; }
+    .medal-wrapper { position: absolute; top: -8px; right: 10px; width: 50px; height: 60px; z-index: 20; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3)); }
+
+    /* Groups & Gifts & Titles */
+    .group-button { border-radius: 24px; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; cursor: pointer; color: white; text-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 4px solid rgba(255,255,255,0.4); }
+    .group-name { font-size: 2.2rem; font-weight: 800; margin-bottom: 15px; }
+    .gift-row { background: rgba(255,255,255,0.4); border-radius: 24px; padding: 15px; margin-bottom: 30px; display: flex; align-items: center; }
+    .gift-category-label { flex: 0 0 120px; height: 120px; border-radius: 50%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; margin-right: 20px; border: 5px solid rgba(255,255,255,0.8); font-weight: 800; }
+    .gift-list-container { flex: 1; display: flex; gap: 15px; overflow-x: auto; padding: 10px 5px; }
+    .gift-card { flex: 0 0 150px; background: rgba(255,255,255,0.8); border-radius: 18px; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+    .gift-img { width: 100%; height: 100px; object-fit: contain; }
+    .title-card { background: rgba(255,255,255,0.85); border-radius: 20px; padding: 20px; text-align: center; border: 4px solid rgba(255,255,255,0.6); min-height: 160px; display: flex; flex-direction: column; justify-content: center; }
+    .title-score-badge { background: var(--primary-color); color: white; padding: 5px 15px; border-radius: 15px; font-weight: 800; display: inline-block; margin-bottom: 10px; }
+    .title-name-large { font-size: 1.6rem; font-weight: 800; }
+    .title-holders-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 10px; }
+    .title-holder-badge { background: rgba(255,255,255,0.6); padding: 2px 8px; border-radius: 10px; font-size: 0.85rem; }
+
+    /* Logs & Marquee */
+    #logContainer { max-width: 1000px; margin: 20px auto; padding: 25px; background: rgba(255,255,255,0.95); border-radius: 25px; }
+    .log-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .log-table th { padding: 15px; text-align: left; background: #e9ecef; border-bottom: 2px solid #dee2e6; }
+    .log-table td { padding: 15px; border-bottom: 1px solid #f0f0f0; }
+    .log-score.positive { color: #198754; font-weight: 800; } .log-score { color: #dc3545; font-weight: 800; }
+    .marquee-container { max-width: 800px; margin: 10px auto 15px; background: rgba(255,255,255,0.4); border-radius: 30px; padding: 8px 15px; display: flex; align-items: center; overflow: hidden; }
+    .marquee-content { display: inline-block; padding-left: 100%; animation: scrollLeft 25s linear infinite; white-space: nowrap; }
+    .marquee-item { margin-right: 30px; font-weight: 500; }
+    @keyframes scrollLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+    /* Login Overlay (FIXED) */
+    .login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20, 20, 40, 0.6); backdrop-filter: blur(8px); z-index: 10000; display: none; justify-content: center; align-items: center; }
+    .login-overlay-content { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(25px); border-radius: 30px; padding: 2.5rem; width: 90%; max-width: 400px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); }
+
+    /* Other */
+    .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(15px); z-index: 10000; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
+    .timer-box { background: rgba(255,255,255,0.95); padding: 30px; border-radius: 30px; text-align: center; width: 90%; max-width: 400px; }
+    .timer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); z-index: 11000; display: flex; justify-content: center; align-items: center; }
+    .timer-display { font-size: 5rem; font-weight: 800; margin: 10px 0; }
+    .modal-content { background: rgba(255,255,255,0.95); border-radius: 30px; backdrop-filter: blur(20px); }
+    .ranking-visuals { display: flex; justify-content: center; align-items: center; gap: 20px; font-size: 4rem; margin-bottom: 1rem; }
+    .ranking-student-img { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.15); }
+    .ranking-score { background: var(--secondary-color); color: white; padding: 5px 20px; border-radius: 20px; font-weight: 800; }
+    
+    /* Lucky Draw & Dice & Bible */
+    .dice-selector { cursor: pointer; padding: 15px 25px; border-radius: 20px; border: 2px solid transparent; background: rgba(255, 255, 255, 0.4); transition: all 0.3s; color: #555; opacity: 0.7; }
+    .dice-selector.active { border-color: var(--primary-color); background: white; color: var(--primary-color); opacity: 1; box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3); font-weight: bold; }
+    .dice-stage { height: 200px; display: flex; justify-content: center; align-items: center; perspective: 1000px; }
+    .dice-box { width: 150px; height: 150px; display: flex; justify-content: center; align-items: center; font-size: 5rem; font-weight: 800; color: white; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); transition: transform 0.5s; position: relative; }
+    .dice-d6 { background: linear-gradient(135deg, #FF6B6B, #EE5253); border-radius: 25px; box-shadow: 0 10px 25px rgba(238, 82, 83, 0.4); border: 4px solid rgba(255,255,255,0.3); }
+    .dice-d20 { width: 160px; height: 185px; background: linear-gradient(135deg, #4ECDC4, #2CB5AC); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); border-radius: 0; filter: drop-shadow(0 10px 15px rgba(44, 181, 172, 0.4)); }
+    .dice-d20::before { content: ''; position: absolute; inset: 5px; background: transparent; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); border: 2px solid rgba(255,255,255,0.4); z-index: 1; }
+    .dice-shaking { animation: shakeDice 0.5s infinite; }
+    .dice-pop { animation: popNum 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes shakeDice { 0% { transform: rotate(0deg) translate(0, 0); } 25% { transform: rotate(15deg) translate(10px, -10px); } 50% { transform: rotate(0deg) translate(0, 20px) scale(0.9); } 75% { transform: rotate(-15deg) translate(-10px, -10px); } 100% { transform: rotate(0deg) translate(0, 0); } }
+    @keyframes popNum { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .lucky-stage { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.4); padding: 40px; border-radius: 30px; text-align: center; }
+    .lucky-card { background: white; border-radius: 25px; padding: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); margin-bottom: 20px; }
+    .lucky-img-box { width: 180px; height: 180px; border-radius: 50%; overflow: hidden; margin: 0 auto 20px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; border: 5px solid var(--secondary-color); }
+    .lucky-img-box img { width: 100%; height: 100%; object-fit: cover; }
+    .lucky-name { font-size: 2rem; font-weight: 800; }
+    .exclusion-panel { background: rgba(255,255,255,0.6); padding: 20px; border-radius: 30px; max-height: 600px; overflow-y: auto; }
+    .exclusion-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; }
+    .exclusion-item { text-align: center; cursor: pointer; position: relative; }
+    .exclusion-item img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; }
+    .exclusion-item.excluded { opacity: 0.5; filter: grayscale(1); }
+    .exclusion-item.excluded::after { content: "✖"; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: red; font-size: 2rem; font-weight: bold; }
+
+    .bible-card-main { background: linear-gradient(135deg, #fff, #f3f4f6); padding: 40px; border-radius: 25px; text-align: center; margin-bottom: 30px; position: relative; }
+    .bible-text-large { font-size: 2rem; font-weight: 800; margin-bottom: 20px; font-family: 'Noto Serif TC', serif; }
+    .bible-ref-large { color: #666; font-weight: 600; border-top: 2px solid var(--primary-color); display: inline-block; padding-top: 10px; }
+    .bible-card-sm { background: rgba(255,255,255,0.8); padding: 15px; border-radius: 15px; height: 100%; }
+    
+    #groupBatchSelector { background: rgba(0,0,0,0.03); padding: 10px; border-radius: 15px; margin-bottom: 15px; border: 1px dashed rgba(0,0,0,0.1); }
+    .batch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; max-height: 180px; overflow-y: auto; }
+    .batch-item { text-align: center; cursor: pointer; position: relative; }
+    .batch-item img { width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; }
+    .batch-item.excluded { opacity: 0.6; filter: grayscale(1); }
+    .batch-item.excluded::after { content: "✖"; position: absolute; top: 10px; left: 50%; transform: translateX(-50%); color: red; font-size: 2rem; }
+  </style>
 </head>
 <body>
 
-<!-- Loading 動畫 -->
+<!-- Loading -->
 <div class="loading-overlay" id="loadingOverlay">
   <div class="spinner-border text-light mb-3" role="status"></div>
   <h3>資料載入中...</h3>
-  <div class="progress w-50 mt-3" style="height: 10px;">
-    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
-  </div>
+  <div class="progress w-50 mt-3" style="height: 10px;"><div class="progress-bar" id="progressBar" style="width: 0%"></div></div>
 </div>
 
-<!-- 圖片放大 Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content bg-transparent border-0">
-      <div class="modal-body text-center">
-        <img id="expandedImage" src="" class="img-fluid rounded shadow-lg">
-      </div>
-    </div>
-  </div>
-</div>
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg"><div class="modal-content bg-transparent border-0"><div class="modal-body text-center"><img id="expandedImage" src="" class="img-fluid rounded shadow-lg"></div></div></div></div>
 
-<!-- 控制面板 (頂部) -->
+<!-- Control Panel -->
 <div class="control-panel">
-  <div class="teacher-info">
-    <i class="fas fa-chalkboard-teacher me-2"></i><span id="displayTeacherName"></span>
-  </div>
+  <div class="teacher-info"><i class="fas fa-chalkboard-teacher me-2"></i><span id="displayTeacherName"></span></div>
   <div class="control-buttons">
-    <button class="modern-btn" onclick="switchCategory('luckydraw')" style="background:linear-gradient(135deg,#FF9A9E,#FECFEF);color:#555">
-      <i class="fas fa-dice"></i> 抽籤
-    </button>
-    <button class="modern-btn" onclick="switchCategory('dice')" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:white">
-      <i class="fas fa-dice-d20"></i> 骰子
-    </button>
-    <button class="modern-btn" onclick="switchCategory('bible')" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);color:#444">
-      <i class="fas fa-book-open"></i> 金句
-    </button>
-    <button class="modern-btn btn-timer" onclick="toggleTimerPanel()" style="background:linear-gradient(135deg,#A8E6CF,#3498db);color:white">
-      <i class="fas fa-stopwatch"></i> 計時
-    </button>
-    <button class="modern-btn btn-sort" id="sortScoresButton" onclick="toggleSort()">
-      <i class="fas fa-sort-amount-down"></i> 排序
-    </button>
-    <button class="modern-btn btn-update" id="updateScoresButton" onclick="updateScores()">
-      <i class="fas fa-sync-alt"></i> 更新
-    </button>
-    <button class="modern-btn btn-login" id="loginButton" onclick="showLoginOverlay()">
-      <i class="fas fa-sign-in-alt"></i> 登入
-    </button>
-    <button class="modern-btn btn-logout" id="logoutButton" onclick="logoutTeacher()">
-      <i class="fas fa-sign-out-alt"></i> 登出
-    </button>
+    <button class="modern-btn" onclick="switchCategory('luckydraw')" style="background:linear-gradient(135deg,#FF9A9E,#FECFEF);color:#555"><i class="fas fa-dice"></i> 抽籤</button>
+    <button class="modern-btn" onclick="switchCategory('dice')" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);color:white"><i class="fas fa-dice-d20"></i> 骰子</button>
+    <button class="modern-btn" onclick="switchCategory('bible')" style="background:linear-gradient(135deg,#84fab0,#8fd3f4);color:#444"><i class="fas fa-book-open"></i> 金句</button>
+    <button class="modern-btn btn-timer" onclick="toggleTimerPanel()" style="background:linear-gradient(135deg,#A8E6CF,#3498db);color:white"><i class="fas fa-stopwatch"></i> 計時</button>
+    <button class="modern-btn btn-sort" id="sortScoresButton" onclick="toggleSort()"><i class="fas fa-sort-amount-down"></i> 排序</button>
+    <button class="modern-btn btn-update" id="updateScoresButton" onclick="updateScores()"><i class="fas fa-sync-alt"></i> 更新</button>
+    <button class="modern-btn btn-login" id="loginButton" onclick="showLoginOverlay()"><i class="fas fa-sign-in-alt"></i> 登入</button>
+    <button class="modern-btn btn-logout" id="logoutButton" onclick="logoutTeacher()"><i class="fas fa-sign-out-alt"></i> 登出</button>
   </div>
 </div>
 
-<!-- 跑馬燈 -->
+<!-- Marquee -->
 <div id="marqueeContainer" class="marquee-container" style="display:none">
   <div class="text-danger me-3"><i class="fas fa-bullhorn"></i></div>
-  <div class="marquee-wrapper">
-    <div id="marqueeContent" class="marquee-content"></div>
-  </div>
+  <div class="marquee-wrapper"><div id="marqueeContent" class="marquee-content"></div></div>
 </div>
 
-<!-- 登入視窗 Overlay -->
+<!-- Login Overlay (FIXED) -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-overlay-content">
     <h4 class="text-center fw-bold mb-4">教師登入</h4>
@@ -87,294 +180,733 @@
   </div>
 </div>
 
-<!-- 分頁導航 Tabs -->
+<!-- Tabs -->
 <ul class="nav nav-tabs" id="categoryTabs">
-  <li class="nav-item">
-    <button class="nav-link glass-tab active" data-type="student" onclick="switchCategory('student')">
-      <i class="fas fa-user-graduate me-2"></i>學生
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link glass-tab" data-type="group" onclick="switchCategory('group')">
-      <i class="fas fa-users me-2"></i>小組
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link glass-tab" data-type="gift" onclick="switchCategory('gift')">
-      <i class="fas fa-gift me-2"></i>禮物
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link glass-tab" data-type="title" onclick="switchCategory('title')">
-      <i class="fas fa-crown me-2"></i>稱號
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link glass-tab" data-type="log" onclick="switchCategory('log')">
-      <i class="fas fa-scroll me-2"></i>得分紀錄表
-    </button>
-  </li>
-  <li class="nav-item">
-    <button class="nav-link glass-tab" onclick="openELearning()" style="color:#0d6efd">
-      <i class="fas fa-laptop-code me-2"></i>電子溫習站
-    </button>
-  </li>
+  <li class="nav-item"><button class="nav-link glass-tab active" data-type="student" onclick="switchCategory('student')"><i class="fas fa-user-graduate me-2"></i>學生</button></li>
+  <li class="nav-item"><button class="nav-link glass-tab" data-type="group" onclick="switchCategory('group')"><i class="fas fa-users me-2"></i>小組</button></li>
+  <li class="nav-item"><button class="nav-link glass-tab" data-type="gift" onclick="switchCategory('gift')"><i class="fas fa-gift me-2"></i>禮物</button></li>
+  <li class="nav-item"><button class="nav-link glass-tab" data-type="title" onclick="switchCategory('title')"><i class="fas fa-crown me-2"></i>稱號</button></li>
+  <li class="nav-item"><button class="nav-link glass-tab" data-type="log" onclick="switchCategory('log')"><i class="fas fa-scroll me-2"></i>得分紀錄表</button></li>
+  <li class="nav-item"><button class="nav-link glass-tab" onclick="openELearning()" style="color:#0d6efd"><i class="fas fa-laptop-code me-2"></i>電子溫習站</button></li>
 </ul>
 
-<!-- 篩選按鈕區 -->
+<!-- Filter -->
 <div id="filterContainer"></div>
 
-<!-- ================= 內容區塊 ================= -->
+<!-- Content Sections -->
+<div id="studentContainer"><div class="grid-container" id="studentSection"></div></div>
+<div id="groupContainer" style="display:none"><div class="grid-container" id="groupSection"></div></div>
+<div id="giftContainer" style="display:none"><div id="giftSection"></div></div>
+<div id="titleContainer" style="display:none"><div class="grid-container" id="titleSection"></div><div class="title-footer-text mt-4">努力累積積分，獲得更酷的稱號吧！</div></div>
 
-<!-- 學生頁面 -->
-<div id="studentContainer">
-  <div class="grid-container" id="studentSection"></div>
-</div>
-
-<!-- 小組頁面 -->
-<div id="groupContainer" style="display:none">
-  <div class="grid-container" id="groupSection"></div>
-</div>
-
-<!-- 禮物頁面 -->
-<div id="giftContainer" style="display:none">
-  <div id="giftSection"></div>
-</div>
-
-<!-- 稱號頁面 -->
-<div id="titleContainer" style="display:none">
-  <div class="grid-container" id="titleSection"></div>
-  <div class="title-footer-text mt-4">努力累積積分，獲得更酷的稱號吧！</div>
-</div>
-
-<!-- 紀錄頁面 -->
+<!-- Log Section -->
 <div id="logContainer" style="display:none">
   <div class="filter-wrapper">
-    <select class="form-select d-inline-block w-auto me-2" id="logGroupSelect" onchange="onLogGroupChange()">
-      <option value="all">全部組別</option>
-    </select>
-    <select class="form-select d-inline-block w-auto" id="logFilterSelect" onchange="filterLogs()">
-      <option value="all">全部學生</option>
-    </select>
+    <select class="form-select d-inline-block w-auto me-2" id="logGroupSelect" onchange="onLogGroupChange()"><option value="all">全部組別</option></select>
+    <select class="form-select d-inline-block w-auto" id="logFilterSelect" onchange="filterLogs()"><option value="all">全部學生</option></select>
   </div>
   <div class="table-responsive mt-3">
-    <table class="log-table">
-      <thead>
-        <tr>
-          <th>時間</th>
-          <th>學生</th>
-          <th>老師</th>
-          <th>項目</th>
-          <th>得分</th>
-        </tr>
-      </thead>
-      <tbody id="logTableBody"></tbody>
-    </table>
+    <table class="log-table"><thead><tr><th>時間</th><th>學生</th><th>老師</th><th>項目</th><th>得分</th></tr></thead><tbody id="logTableBody"></tbody></table>
   </div>
 </div>
 
-<!-- 幸運抽籤頁面 -->
+<!-- Lucky Draw -->
 <div id="luckyDrawContainer" style="display:none;max-width:1200px;margin:0 auto">
   <div id="luckyGroupSelector" class="d-flex flex-wrap justify-content-center gap-2 mb-4"></div>
   <div class="row g-4">
     <div class="col-md-7">
       <div class="lucky-stage">
         <div id="luckyCard" class="lucky-card">
-          <div class="lucky-img-box">
-            <img id="luckyImage" style="display:none">
-            <i class="fas fa-question fa-3x text-muted" id="luckyDefaultIcon"></i>
-          </div>
+          <div class="lucky-img-box"><img id="luckyImage" style="display:none"><i class="fas fa-question fa-3x text-muted" id="luckyDefaultIcon"></i></div>
           <div class="lucky-name" id="luckyName">誰是幸運兒？</div>
         </div>
-        <div class="mt-4">
-          <button class="modern-btn me-2" id="startLuckyBtn" onclick="toggleLuckyDrawManual()" style="background:#FF6B6B;color:white">手動開始</button>
-          <button class="modern-btn" id="autoLuckyBtn" onclick="startAutoLuckyDraw()" style="background:#4ECDC4;color:white">電腦搞珠</button>
-        </div>
+        <div class="mt-4"><button class="modern-btn me-2" id="startLuckyBtn" onclick="toggleLuckyDrawManual()" style="background:#FF6B6B;color:white">手動開始</button><button class="modern-btn" id="autoLuckyBtn" onclick="startAutoLuckyDraw()" style="background:#4ECDC4;color:white">電腦搞珠</button></div>
       </div>
     </div>
     <div class="col-md-5">
       <div class="exclusion-panel">
-        <h5 class="text-center mb-3">
-          點擊頭像排除學生 
-          <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetExclusion()">重置</button>
-        </h5>
+        <h5 class="text-center mb-3">點擊頭像排除學生 <button class="btn btn-sm btn-outline-secondary ms-2" onclick="resetExclusion()">重置</button></h5>
         <div id="exclusionList" class="exclusion-grid"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- 骰子頁面 -->
+<!-- Dice -->
 <div id="diceContainer" style="display:none;max-width:800px;margin:0 auto">
   <div class="glass-tab p-5 text-center" style="border-radius:30px">
     <h3><i class="fas fa-dice me-2"></i>命運的骰子</h3>
     <div class="d-flex justify-content-center gap-4 my-4">
-      <div class="dice-selector active" id="selDice6" onclick="selectDiceType(6)">
-        <i class="fas fa-dice-six fa-2x"></i> 6面
-      </div>
-      <div class="dice-selector" id="selDice20" onclick="selectDiceType(20)">
-        <i class="fas fa-dice-d20 fa-2x"></i> 20面
-      </div>
+      <div class="dice-selector active" id="selDice6" onclick="selectDiceType(6)"><i class="fas fa-dice-six fa-2x"></i> 6面</div>
+      <div class="dice-selector" id="selDice20" onclick="selectDiceType(20)"><i class="fas fa-dice-d20 fa-2x"></i> 20面</div>
     </div>
-    <div class="dice-stage mb-4">
-      <div id="diceDisplay" class="dice-box dice-d6"><span id="diceResult">?</span></div>
-    </div>
+    <div class="dice-stage mb-4"><div id="diceDisplay" class="dice-box dice-d6"><span id="diceResult">?</span></div></div>
     <button class="modern-btn fs-4 px-5 py-2" onclick="rollDice()" style="background:#667eea;color:white">試試手氣</button>
   </div>
 </div>
 
-<!-- 金句頁面 -->
+<!-- Bible -->
 <div id="bibleContainer" style="display:none;max-width:1000px;margin:0 auto">
-  <div id="currentVerseSection" class="mb-5">
-    <div id="currentVerseCard"></div>
-  </div>
-  <div class="glass-tab p-4" style="border-radius:20px">
-    <h4 class="mb-3"><i class="fas fa-history me-2"></i>金句庫</h4>
-    <div id="bibleList" class="row g-3"></div>
-  </div>
+  <div id="currentVerseSection" class="mb-5"><div id="currentVerseCard"></div></div>
+  <div class="glass-tab p-4" style="border-radius:20px"><h4 class="mb-3"><i class="fas fa-history me-2"></i>金句庫</h4><div id="bibleList" class="row g-3"></div></div>
 </div>
 
-<!-- ================= Modals 彈出視窗 ================= -->
+<!-- Modals -->
+<!-- Score Modal -->
+<div class="modal fade" id="scoreModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold" id="scoreModalLabel">操作</h5><button type="button" class="btn-close" onclick="closeScoreModal()"></button></div>
+  <div class="modal-body">
+    <p id="modalTargetInfo" class="fs-5 text-center fw-bold"></p>
+    
+    <!-- Batch Selector -->
+    <div id="groupBatchSelector" style="display:none">
+       <div class="d-flex justify-content-between mb-2"><small class="fw-bold">點擊頭像排除</small><button class="btn btn-sm btn-outline-primary py-0" onclick="resetBatchSelection()">全選</button></div>
+       <div id="batchGrid" class="batch-grid"></div>
+    </div>
 
-<!-- 加扣分 Modal -->
-<div class="modal fade" id="scoreModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold" id="scoreModalLabel">操作</h5>
-        <button type="button" class="btn-close" onclick="closeScoreModal()"></button>
-      </div>
-      <div class="modal-body">
-        <p id="modalTargetInfo" class="fs-5 text-center fw-bold"></p>
-        
-        <!-- Batch Selector -->
-        <div id="groupBatchSelector" style="display:none">
-           <div class="d-flex justify-content-between mb-2">
-             <small class="fw-bold">點擊頭像排除</small>
-             <button class="btn btn-sm btn-outline-primary py-0" onclick="resetBatchSelection()">全選</button>
-           </div>
-           <div id="batchGrid" class="batch-grid"></div>
-        </div>
+    <!-- XP Bar -->
+    <div id="xpContainer" class="mb-3 p-3 rounded bg-light border" style="display:none">
+       <div id="xpText" class="text-center fw-bold mb-2"></div>
+       <div class="progress" style="height:10px"><div id="xpBar" class="progress-bar bg-warning" style="width:0%"></div></div>
+       <div id="monthlyScoreText" class="text-center mt-2 small text-muted"></div>
+    </div>
 
-        <!-- XP Bar -->
-        <div id="xpContainer" class="mb-3 p-3 rounded bg-light border" style="display:none">
-           <div id="xpText" class="text-center fw-bold mb-2"></div>
-           <div class="progress" style="height:10px">
-             <div id="xpBar" class="progress-bar bg-warning" style="width:0%"></div>
-           </div>
-           <div id="monthlyScoreText" class="text-center mt-2 small text-muted"></div>
-        </div>
+    <!-- History -->
+    <div id="historyContainer" class="p-3 rounded bg-white border mb-3" style="display:none">
+       <h6 class="text-center text-muted mb-2">最近紀錄</h6>
+       <table class="table table-sm mb-0"><thead><tr><th>日期</th><th>項目</th><th class="text-end">分</th></tr></thead><tbody id="historyTableBody"></tbody></table>
+       <div class="d-flex justify-content-between mt-2"><button class="btn btn-sm btn-light" id="prevHistoryBtn" onclick="changeHistoryPage(-1)">◀</button><span id="historyPageLabel">1/1</span><button class="btn btn-sm btn-light" id="nextHistoryBtn" onclick="changeHistoryPage(1)">▶</button></div>
+    </div>
 
-        <!-- History -->
-        <div id="historyContainer" class="p-3 rounded bg-white border mb-3" style="display:none">
-           <h6 class="text-center text-muted mb-2">最近紀錄</h6>
-           <table class="table table-sm mb-0">
-             <thead><tr><th>日期</th><th>項目</th><th class="text-end">分</th></tr></thead>
-             <tbody id="historyTableBody"></tbody>
-           </table>
-           <div class="d-flex justify-content-between mt-2">
-             <button class="btn btn-sm btn-light" id="prevHistoryBtn" onclick="changeHistoryPage(-1)">◀</button>
-             <span id="historyPageLabel">1/1</span>
-             <button class="btn btn-sm btn-light" id="nextHistoryBtn" onclick="changeHistoryPage(1)">▶</button>
-           </div>
+    <!-- Teacher Controls -->
+    <div id="teacherControls" style="display:none">
+        <div class="d-flex gap-2 mb-3">
+          <button class="modern-btn flex-fill" style="background:#4ECDC4;color:white" id="addPointsBtn" onclick="setScoreCategory('加分')">加分</button>
+          <button class="modern-btn flex-fill" style="background:white;border:1px solid #ddd;color:#aaa" id="deductPointsBtn" onclick="setScoreCategory('扣分')">扣分</button>
         </div>
-
-        <!-- Teacher Controls -->
-        <div id="teacherControls" style="display:none">
-            <div class="d-flex gap-2 mb-3">
-              <button class="modern-btn flex-fill" style="background:#4ECDC4;color:white" id="addPointsBtn" onclick="setScoreCategory('加分')">加分</button>
-              <button class="modern-btn flex-fill" style="background:white;border:1px solid #ddd;color:#aaa" id="deductPointsBtn" onclick="setScoreCategory('扣分')">扣分</button>
-            </div>
-            <div class="mb-3">
-              <select class="form-select" id="itemSelect" onchange="updateScoreOptions()"></select>
-            </div>
-            <div class="mb-3">
-              <select class="form-select" id="scoreSelect" onchange="toggleCustomInput()"></select>
-              <input type="number" id="customScoreInput" class="form-control mt-2" placeholder="輸入數值" style="display:none">
-            </div>
-        </div>
-      </div>
-      <div class="modal-footer justify-content-center">
-        <button class="btn btn-light" onclick="closeScoreModal()">取消</button>
-        <button class="btn btn-primary" id="confirmScoreBtn" onclick="sendScoreRecord()">送出</button>
-      </div>
+        <div class="mb-3"><select class="form-select" id="itemSelect" onchange="updateScoreOptions()"></select></div>
+        <div class="mb-3"><select class="form-select" id="scoreSelect" onchange="toggleCustomInput()"></select><input type="number" id="customScoreInput" class="form-control mt-2" placeholder="輸入數值" style="display:none"></div>
     </div>
   </div>
-</div>
-
-<!-- 編輯紀錄 Modal (已包含項目修改) -->
-<div class="modal fade" id="editLogModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title fw-bold">✏️ 編輯紀錄</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <input type="hidden" id="editLogRowIndex">
-        <div class="mb-3">
-          <label class="form-label">學生姓名</label>
-          <input type="text" class="form-control" id="editLogName">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">項目名稱</label>
-          <input type="text" class="form-control" id="editLogItem">
-        </div>
-        <div class="mb-3">
-          <label class="form-label">分數</label>
-          <input type="number" class="form-control" id="editLogScore">
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-        <button type="button" class="btn btn-primary" onclick="doEditLog()">儲存修改</button>
-      </div>
-    </div>
+  <div class="modal-footer justify-content-center">
+    <button class="btn btn-light" onclick="closeScoreModal()">取消</button>
+    <button class="btn btn-primary" id="confirmScoreBtn" onclick="sendScoreRecord()">送出</button>
   </div>
-</div>
+</div></div></div>
 
-<!-- 排名 Modal -->
-<div class="modal fade" id="rankingModal" tabindex="-1">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-body text-center" id="rankingModalBody"></div>
-      <div class="modal-footer justify-content-center border-0">
-        <button class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">讚！</button>
-      </div>
-    </div>
+<!-- Edit Log Modal (NEW) -->
+<div class="modal fade" id="editLogModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title fw-bold">✏️ 編輯紀錄</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body">
+    <input type="hidden" id="editLogRowIndex">
+    <div class="mb-3"><label class="form-label">學生姓名</label><input type="text" class="form-control" id="editLogName"></div>
+    <div class="mb-3"><label class="form-label">項目名稱</label><input type="text" class="form-control" id="editLogItem"></div>
+    <div class="mb-3"><label class="form-label">分數</label><input type="number" class="form-control" id="editLogScore"></div>
   </div>
-</div>
+  <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button><button type="button" class="btn btn-primary" onclick="doEditLog()">儲存修改</button></div>
+</div></div></div>
 
-<!-- 計時器面板 -->
+<!-- Ranking Modal -->
+<div class="modal fade" id="rankingModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content">
+  <div class="modal-body text-center" id="rankingModalBody"></div>
+  <div class="modal-footer justify-content-center border-0"><button class="btn btn-primary rounded-pill px-4" data-bs-dismiss="modal">讚！</button></div>
+</div></div></div>
+
+<!-- Timer Panel -->
 <div id="timerPanel" class="timer-overlay" style="display:none">
   <div class="timer-box">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4><i class="fas fa-clock"></i> 計時器</h4>
-      <button class="btn-close" onclick="toggleTimerPanel()"></button>
-    </div>
+    <div class="d-flex justify-content-between align-items-center mb-3"><h4><i class="fas fa-clock"></i> 計時器</h4><button class="btn-close" onclick="toggleTimerPanel()"></button></div>
     <div class="timer-display" id="timerDisplay">00:00</div>
-    <div class="d-flex justify-content-center gap-2 mb-3">
-      <input type="number" id="timerInputMin" class="form-control text-center" placeholder="分" style="width:70px">
-      <input type="number" id="timerInputSec" class="form-control text-center" placeholder="秒" style="width:70px">
-      <button class="btn btn-dark" onclick="applyCustomTime()">設定</button>
-    </div>
-    <div class="mb-4 small text-muted">
-      <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addTime(1)">+1分</button> 
-      <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addTime(5)">+5分</button>
-    </div>
-    <div>
-      <button class="btn btn-success me-2" id="btnStartTimer" onclick="startTimer()">開始</button>
-      <button class="btn btn-warning me-2" id="btnPauseTimer" onclick="stopTimer()" style="display:none">暫停</button>
-      <button class="btn btn-danger" onclick="resetTimer()">重置</button>
-    </div>
+    <div class="d-flex justify-content-center gap-2 mb-3"><input type="number" id="timerInputMin" class="form-control text-center" placeholder="分" style="width:70px"><input type="number" id="timerInputSec" class="form-control text-center" placeholder="秒" style="width:70px"><button class="btn btn-dark" onclick="applyCustomTime()">設定</button></div>
+    <div class="mb-4 small text-muted"><button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addTime(1)">+1分</button> <button class="btn btn-sm btn-outline-secondary rounded-pill" onclick="addTime(5)">+5分</button></div>
+    <div><button class="btn btn-success me-2" id="btnStartTimer" onclick="startTimer()">開始</button><button class="btn btn-warning me-2" id="btnPauseTimer" onclick="stopTimer()" style="display:none">暫停</button><button class="btn btn-danger" onclick="resetTimer()">重置</button></div>
   </div>
 </div>
 
-<!-- 引入 Bootstrap JS (必要) -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // ==========================================
+  // CONFIGURATION: GAS API URL
+  // ==========================================
+  const API_URL = "https://script.google.com/macros/s/AKfycbyWkt5bTcX8BokqviAXoMgFaWTyU2PkqqeHy-rhGRiJlsWkkn6-wLGfdylDFWLfh-nC/exec";
 
-<!-- 連結你的 JS 檔案 (大腦) -->
-<script src="script.js"></script>
+  // API Call Helper
+  async function callApi(action, params = {}) {
+    const isReadAction = ['getInitialData', 'getLatestScores'].includes(action);
+    let fetchUrl = API_URL;
+    let options = { method: "POST" };
 
+    if (isReadAction) {
+      const queryString = new URLSearchParams({ action: action, ...params }).toString();
+      fetchUrl = `${API_URL}?${queryString}`;
+      options.method = "GET";
+    } else {
+      const payload = { action: action, ...params };
+      options.body = JSON.stringify(payload);
+    }
+
+    const response = await fetch(fetchUrl, options);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
+  }
+
+  // ==========================================
+  // Global Variables
+  // ==========================================
+  let allStudents=[], originalStudents=[], teacherList=[], allItems=[], allGroups=[], allGifts=[], titleConfig={enabled:false,rules:[]}, allLogs=[], monthlyKings=[], allVerses=[], appSettings={};
+  let currentTeacher=null, isSorted=false, modalTargetType="", modalTargetName="", currentScoreCategory="加分", currentFilter="all", batchExcludedSet=new Set();
+  const studentScoreMap={};
+  let progressInterval;
+  const loadingOverlay=document.getElementById('loadingOverlay'), progressBar=document.getElementById('progressBar');
+  
+  // Feature Vars
+  let luckyIntervalId=null, currentGroupStudents=[], activeCandidates=[], excludedNames=new Set(), currentLuckyStudent=null;
+  const HISTORY_PER_PAGE=5; let currentHistoryPage=1, currentModalStudent=null;
+  let currentDiceMax=6, isRolling=false;
+  let timerInterval=null, totalSeconds=0, isTimerRunning=false;
+  const alarmSound=new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg"); alarmSound.loop=true;
+
+  // ==========================================
+  // Initialization
+  // ==========================================
+  window.onload = function() {
+    startLoadingSimulation();
+    callApi('getInitialData')
+      .then(data => {
+        finishLoading();
+        if (!data) throw new Error("無資料");
+        allStudents = data.students || [];
+        originalStudents = [...allStudents];
+        teacherList = data.teachers || [];
+        allItems = data.items || [];
+        allGroups = data.groups || [];
+        allGifts = data.gifts || [];
+        titleConfig = data.titles || { enabled: false, rules: [] };
+        allLogs = data.logs || [];
+        monthlyKings = data.monthlyKings || [];
+        allVerses = data.bibleVerses || [];
+        appSettings = data.settings || {};
+
+        generateFilterButtons();
+        renderPage();
+        if(document.getElementById('filterContainer')) document.getElementById('filterContainer').style.display='flex';
+      })
+      .catch(error => {
+        clearInterval(progressInterval);
+        updateProgressBar(100);
+        alert("資料載入失敗：" + error.message);
+        finishLoading();
+      });
+  };
+
+  function renderPage() {
+    renderStudents();
+    renderGroups();
+    renderGifts();
+    renderTitles();
+    initLogFilter();
+    renderMarquee();
+    if (currentTeacher) {
+        document.getElementById('displayTeacherName').textContent = currentTeacher['姓名'];
+        document.querySelector('.teacher-info').style.display = 'block';
+        document.getElementById('loginButton').style.display = 'none';
+        document.getElementById('logoutButton').style.display = 'inline-flex';
+    } else {
+        document.querySelector('.teacher-info').style.display = 'none';
+        document.getElementById('loginButton').style.display = 'inline-flex';
+        document.getElementById('logoutButton').style.display = 'none';
+    }
+  }
+
+  // ==========================================
+  // Core Logic
+  // ==========================================
+  function generateFilterButtons() {
+    const filterContainer = document.getElementById('filterContainer');
+    if (!filterContainer) return;
+    filterContainer.innerHTML = ''; 
+    const allBtn = document.createElement('button'); allBtn.className = 'filter-btn active'; allBtn.textContent = '全部';
+    allBtn.onclick = () => filterStudents('all', allBtn); filterContainer.appendChild(allBtn);
+    allGroups.forEach(groupName => {
+      const btn = document.createElement('button'); btn.className = 'filter-btn'; btn.textContent = groupName;
+      btn.onclick = () => filterStudents(groupName, btn); filterContainer.appendChild(btn);
+    });
+  }
+
+  function filterStudents(groupName, btnElement) {
+    currentFilter = groupName;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btnElement.classList.add('active');
+    renderStudents();
+  }
+
+  function renderStudents() {
+    const container = document.getElementById('studentSection'); if (!container) return;
+    container.innerHTML = '';
+    const groupRankMap = getGroupRankings(allStudents);
+    let studentsToRender = isSorted ? allStudents : originalStudents;
+    if (currentFilter !== 'all') studentsToRender = studentsToRender.filter(s => String(s["分組"]).trim() === currentFilter);
+    
+    studentsToRender.forEach(stu => {
+      const score = Number(stu["總得分"]) || 0;
+      const cumulativeScore = Number(stu["累積分數"]) || 0;
+      const groupName = String(stu["分組"]).trim() || "未分組";
+      const imgUrl = (stu["圖片網址"] && String(stu["圖片網址"]).trim() !== '') ? stu["圖片網址"] : '';
+      
+      let titleHtml = '', kingHtml = '', frameClass = '', effectClass = '';
+      if (titleConfig.enabled && titleConfig.rules.length > 0) {
+        const sortedRules = [...titleConfig.rules].sort((a, b) => Number(b.score) - Number(a.score));
+        for (const rule of sortedRules) { if (cumulativeScore >= Number(rule.score)) { titleHtml = `<div class="info-pill title-pill">(${rule.score}) ${rule.title}</div>`; break; } }
+      }
+      if (monthlyKings.includes(stu["姓名"])) { kingHtml = `<div class="king-pill">👑 本月得分王！</div>`; effectClass = 'effect-king'; }
+      if (cumulativeScore >= 80) frameClass = 'frame-gold'; else if (cumulativeScore >= 35) frameClass = 'frame-silver'; else if (cumulativeScore >= 20) frameClass = 'frame-bronze';
+
+      const myRank = groupRankMap[stu["姓名"]];
+      let medalHtml = '';
+      if (myRank === 1) medalHtml = getMedalHtml('gold', stu["姓名"], groupName, cumulativeScore, imgUrl);
+      else if (myRank === 2) medalHtml = getMedalHtml('silver', stu["姓名"], groupName, cumulativeScore, imgUrl);
+      else if (myRank === 3) medalHtml = getMedalHtml('bronze', stu["姓名"], groupName, cumulativeScore, imgUrl);
+
+      const wrapper = document.createElement('div'); wrapper.className = "student-card-wrapper";
+      const card = document.createElement('div'); card.className = "student-card";
+      let imageContent = imgUrl ? `<div class="image-container ${frameClass} ${effectClass}"><img src="${imgUrl}" alt="${stu["姓名"]}" onerror="handleImageError(this)">${medalHtml}</div>` : `<div class="image-container ${frameClass} ${effectClass}"><div class="student-square" style="background:${generateRandomPastelColor()};"></div>${medalHtml}</div>`;
+      card.innerHTML = `${imageContent}<div class="stats-row"><div class="score-pill"><span>🌟</span> ${score}</div><div class="cumulative-pill"><span>💡</span> ${cumulativeScore}</div></div><div class="info-container">${kingHtml}${titleHtml}<div class="info-pill student-name-pill">${stu["姓名"]}</div><div class="info-pill group-name-pill">${groupName}</div></div>`;
+      card.onclick = () => openScoreModal("學生", stu["姓名"]);
+      wrapper.appendChild(card); container.appendChild(wrapper);
+      studentScoreMap[stu["姓名"]] = card.querySelector(".score-pill"); 
+    });
+  }
+
+  function renderGroups() {
+    const container = document.getElementById('groupSection'); if (!container) return;
+    container.innerHTML = '';
+    const gradients = ['linear-gradient(135deg, #FF6B6B, #FFA07A)', 'linear-gradient(135deg, #4ECDC4, #A0D8D4)', 'linear-gradient(135deg, #4F80E1, #80A7F5)', 'linear-gradient(135deg, #8A2BE2, #B98BEF)', 'linear-gradient(135deg, #FFD700, #FFEE79)', 'linear-gradient(135deg, #3CB371, #8FD4AA)'];
+    allGroups.forEach((groupName, index) => {
+      const studentsInGroup = allStudents.filter(s => String(s["分組"]).trim() === groupName);
+      const studentsStr = studentsInGroup.map(s => s["姓名"]).join('、');
+      const groupBtn = document.createElement('div'); groupBtn.className = "group-button";
+      groupBtn.style.background = gradients[index % gradients.length];
+      groupBtn.innerHTML = `<div class="group-name">${groupName}</div><div class="group-students">${studentsStr}</div>`;
+      groupBtn.onclick = () => openScoreModal("小組", groupName);
+      const wrapper = document.createElement('div'); wrapper.className="student-card-wrapper";
+      wrapper.appendChild(groupBtn); container.appendChild(wrapper);
+    });
+  }
+
+  function renderGifts() {
+    const container = document.getElementById('giftSection'); if (!container) return;
+    container.innerHTML = '';
+    const tiers = [{ name: "秀才賞", range: "5分或以下", min: -9999, max: 5, color: "var(--tier1-color)" }, { name: "探花賞", range: "6至25分", min: 6, max: 25, color: "var(--tier2-color)" }, { name: "榜眼賞", range: "26至40分", min: 26, max: 40, color: "var(--tier3-color)" }, { name: "狀元賞", range: "41至85分", min: 41, max: 85, color: "var(--tier4-color)" }, { name: "金榜之首", range: "86分以上", min: 86, max: 99999, color: "var(--tier5-color)" }];
+    tiers.forEach(tier => {
+      let tierGifts = allGifts.filter(g => { const s = Number(g["所需分數"])||0; return s >= tier.min && s <= tier.max; });
+      tierGifts.sort((a,b) => { const qtyA=(a["數量"]===""||a["數量"]===undefined)?999:Number(a["數量"]); const qtyB=(b["數量"]===""||b["數量"]===undefined)?999:Number(b["數量"]); if(qtyA===0 && qtyB!==0) return 1; if(qtyA!==0 && qtyB===0) return -1; return (Number(a["所需分數"])||0)-(Number(b["所需分數"])||0); });
+      const rowDiv = document.createElement('div'); rowDiv.className = 'gift-row';
+      rowDiv.innerHTML = `<div class="gift-category-label" style="background:${tier.color}"><span class="gift-label-title">${tier.name}</span><span class="gift-label-desc">${tier.range}</span></div>`;
+      const listDiv = document.createElement('div'); listDiv.className = 'gift-list-container';
+      if(tierGifts.length===0) listDiv.innerHTML='<div style="padding:10px; opacity:0.5;">暫無禮物</div>';
+      else {
+        tierGifts.forEach(gift => {
+          const qty=(gift["數量"]===""||gift["數量"]===undefined)?999:Number(gift["數量"]); const isSoldOut=(qty===0); const imgUrl=gift["圖片連結"]||'';
+          const imgTag = imgUrl ? `<img src="${imgUrl}" class="gift-img" onclick="openImageModal('${imgUrl}')">` : `<div class="gift-img d-flex align-items-center justify-content-center" style="background:#eee;border-radius:10px;"><i class="fas fa-gift fa-3x text-secondary"></i></div>`;
+          const overlay = isSoldOut ? `<div class="sold-out-overlay"><div class="sold-out-stamp">缺貨！</div></div>` : '';
+          const card = document.createElement('div'); card.className = 'gift-card';
+          card.innerHTML = `<div class="sold-out-wrapper">${imgTag}${overlay}</div><div class="gift-name">${gift["禮物名稱"]}</div><div class="gift-point-pill">${gift["所需分數"]} 分</div>`;
+          listDiv.appendChild(card);
+        });
+      }
+      rowDiv.appendChild(listDiv); container.appendChild(rowDiv);
+    });
+  }
+
+  function renderTitles() {
+    const container = document.getElementById('titleSection'); if (!container) return;
+    container.innerHTML = '';
+    const rules = (titleConfig && titleConfig.rules) ? titleConfig.rules : [];
+    if (rules.length === 0) { container.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding:20px; color:#555;">暫無稱號資料</div>'; return; }
+    
+    const holdersMap = {};
+    const sortedRulesForCalc = [...rules].sort((a, b) => Number(b.score) - Number(a.score));
+    allStudents.forEach(stu => {
+        const cScore = Number(stu["累積分數"]) || 0;
+        const matchedRule = sortedRulesForCalc.find(r => cScore >= Number(r.score));
+        if (matchedRule) { if (!holdersMap[matchedRule.title]) holdersMap[matchedRule.title] = []; holdersMap[matchedRule.title].push(stu["姓名"]); }
+    });
+
+    rules.sort((a, b) => (Number(a.score) || 0) - (Number(b.score) || 0));
+    rules.forEach(rule => {
+      const wrapper = document.createElement('div'); wrapper.className = "student-card-wrapper"; 
+      const card = document.createElement('div'); card.className = "title-card";
+      let holdersHtml = ''; const holders = holdersMap[rule.title] || [];
+      if (holders.length > 0) { holders.sort((a, b) => a.localeCompare(b)); const listItems = holders.map(name => `<span class="title-holder-badge">${name}</span>`).join(''); holdersHtml = `<div class="title-holders-list">${listItems}</div>`; }
+      card.innerHTML = `<div class="title-score-badge">🏆 積分 ${rule.score}</div><div class="title-name-large">${rule.title}</div><div class="title-holders-section"><span class="title-holders-label">目前擁有者：</span>${holdersHtml}</div>`;
+      wrapper.appendChild(card); container.appendChild(wrapper);
+    });
+  }
+
+  function initLogFilter() {
+    const groupSel = document.getElementById('logGroupSelect'), studentSel = document.getElementById('logFilterSelect');
+    if(!groupSel || !studentSel) return;
+    groupSel.innerHTML = '<option value="all">全部組別</option>';
+    [...allGroups].sort().forEach(g => { const opt = document.createElement('option'); opt.value = g; opt.textContent = g; groupSel.appendChild(opt); });
+    updateLogStudentOptions('all');
+  }
+
+  function onLogGroupChange() { updateLogStudentOptions(document.getElementById('logGroupSelect').value); filterLogs(); }
+  
+  function updateLogStudentOptions(groupName) {
+    const studentSel = document.getElementById('logFilterSelect'); studentSel.innerHTML = '<option value="all">全部學生</option>';
+    let targetStudents = allStudents;
+    if (groupName !== 'all') targetStudents = allStudents.filter(s => String(s["分組"]).trim() === groupName);
+    targetStudents.sort((a,b) => a['姓名'].localeCompare(b['姓名']));
+    targetStudents.forEach(s => { const opt = document.createElement('option'); opt.value = s['姓名']; opt.textContent = s['姓名']; studentSel.appendChild(opt); });
+  }
+
+  function filterLogs() { renderLogs(document.getElementById('logGroupSelect').value, document.getElementById('logFilterSelect').value); }
+
+  function renderLogs(groupFilter = 'all', studentFilter = 'all') {
+    const tbody = document.getElementById('logTableBody'); tbody.innerHTML = '';
+    let logsToShow = allLogs.filter(log => {
+      const studentInfo = allStudents.find(s => s["姓名"] === log.student);
+      const studentGroup = studentInfo ? String(studentInfo["分組"]).trim() : "未分組";
+      return ((groupFilter === 'all') || (studentGroup === groupFilter)) && ((studentFilter === 'all') || (log.student === studentFilter));
+    });
+    if (logsToShow.length === 0) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">沒有符合條件的記錄</td></tr>'; return; }
+    
+    logsToShow.forEach(log => {
+      const tr = document.createElement('tr'); const date = new Date(log.time);
+      const timeStr = date.toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const teacherObj = teacherList.find(t => t['帳號'] === log.teacherAcc);
+      const teacherName = teacherObj ? teacherObj['姓名'] : log.teacherAcc;
+      const scoreNum = Number(log.score); const scoreClass = scoreNum > 0 ? 'log-score positive' : 'log-score';
+      
+      let editBtnHtml = '';
+      if (currentTeacher) {
+        editBtnHtml = `<button class="btn btn-sm btn-outline-secondary ms-2" style="border-radius:50%;padding:2px 6px" onclick="openEditLogModal(${log.rowIndex}, '${log.student}', ${scoreNum}, '${log.item}')"><i class="fas fa-pen" style="font-size:0.7rem"></i></button>`;
+      }
+
+      tr.innerHTML = `<td class="log-time">${timeStr}</td><td style="font-weight:bold;">${log.student}</td><td>${teacherName}</td><td>${log.item}</td><td class="${scoreClass}">${scoreNum>0?'+':''}${scoreNum}${editBtnHtml}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderMarquee() {
+    const container = document.getElementById('marqueeContainer'), content = document.getElementById('marqueeContent');
+    if (!container || !content) return;
+    if (!allLogs || allLogs.length === 0) { container.style.display = 'none'; return; }
+    container.style.display = 'flex';
+    let html = '';
+    allLogs.slice(0, 15).forEach(log => {
+      const date = new Date(log.time); const timeStr = date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+      const scoreNum = Number(log.score); const scoreClass = scoreNum >= 0 ? 'text-success' : 'text-danger';
+      html += `<span class="marquee-item"><span class="text-muted small me-1">[${timeStr}]</span><strong>${log.student}</strong><span class="${scoreClass} fw-bold ms-1">${scoreNum>=0?'+':''}${scoreNum}</span> <span class="text-muted">(${log.item})</span></span>`;
+    });
+    content.innerHTML = html;
+  }
+
+  // ==========================================
+  // Action Handlers
+  // ==========================================
+  function updateScores() {
+    const btn = document.getElementById('updateScoresButton'); btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    callApi('getInitialData')
+      .then(data => {
+        btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> 更新';
+        if(data.students) allStudents = data.students;
+        if(data.logs) allLogs = data.logs;
+        if(data.monthlyKings) monthlyKings = data.monthlyKings;
+        
+        if(isSorted) allStudents.sort((a,b)=>(b["累積分數"]||0)-(a["累積分數"]||0));
+        renderPage();
+      })
+      .catch(e => { alert("更新失敗: " + e); btn.disabled = false; btn.innerHTML = '<i class="fas fa-sync-alt"></i> 更新'; });
+  }
+
+  function sendScoreRecord() {
+    const item = document.getElementById('itemSelect').value;
+    let score = document.getElementById('scoreSelect').value;
+    if (score === 'custom') { score = document.getElementById('customScoreInput').value; if (!score || score <= 0) { alert("請輸入有效的正整數！"); return; } }
+    
+    let finalTargetType = modalTargetType, finalTargetName = modalTargetName;
+    if (modalTargetType === "小組") {
+        const groupStudents = allStudents.filter(s => String(s["分組"]).trim() === modalTargetName);
+        if (batchExcludedSet.size === groupStudents.length) { alert("請至少選擇一位學生！"); return; }
+        if (batchExcludedSet.size > 0) {
+            finalTargetType = "自訂名單";
+            finalTargetName = groupStudents.map(s => s["姓名"]).filter(name => !batchExcludedSet.has(name)).join(",");
+        }
+    }
+    const btn = document.getElementById('confirmScoreBtn'); btn.disabled = true; btn.innerHTML = "傳送中...";
+    
+    callApi('addScoreRecord', { teacherAccount: currentTeacher["帳號"], targetType: finalTargetType, targetName: finalTargetName, item: item, score: score })
+      .then(data => {
+          closeScoreModal(); btn.disabled = false; btn.innerHTML = "送出";
+          if(data.students) allStudents = data.students;
+          if(data.logs) allLogs = data.logs;
+          if(data.monthlyKings) monthlyKings = data.monthlyKings;
+
+          if(isSorted) allStudents.sort((a,b)=>(b["累積分數"]||0)-(a["累積分數"]||0));
+          renderPage();
+      })
+      .catch(e => { alert("錯誤：" + e); btn.disabled = false; btn.innerHTML = "送出"; });
+  }
+
+  function loginTeacher() {
+    const acc = document.getElementById('loginAccount').value.trim();
+    const pwd = document.getElementById('loginPassword').value.trim();
+    const t = teacherList.find(x => String(x['帳號'])===acc && String(x['密碼'])===pwd);
+    if(t) { 
+      currentTeacher = t; 
+      hideLoginOverlay(); 
+      renderPage(); 
+      if(document.querySelector('.nav-link.active').dataset.type === 'log') {
+        filterLogs();
+      }
+    } else alert("帳號或密碼錯誤");
+  }
+
+  function logoutTeacher() { currentTeacher = null; isSorted = false; document.getElementById('sortScoresButton').innerHTML = '<i class="fas fa-sort-amount-down"></i> 排序'; renderPage(); }
+  
+  function switchCategory(type) {
+    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+    const activeTab = document.querySelector(`[data-type="${type}"]`); if (activeTab) activeTab.classList.add('active');
+    ['student','group','gift','title','log','luckydraw','dice','bible'].forEach(k => { const el = document.getElementById(k+'Container'); if(el) el.style.display = (k===type)?'block':'none'; });
+    if(type==='student') { document.getElementById('filterContainer').style.display='flex'; renderStudents(); } else document.getElementById('filterContainer').style.display='none';
+    if(type==='group') renderGroups();
+    if(type==='gift') renderGifts();
+    if(type==='title') renderTitles();
+    if(type==='log') filterLogs();
+    if(type==='luckydraw') initLuckyDraw();
+    if(type==='bible') renderBibleVerses();
+    const sortBtn = document.getElementById('sortScoresButton'); if(sortBtn) sortBtn.style.visibility = (type==='student'||type==='group')?'visible':'hidden';
+  }
+
+  // ==========================================
+  // Helper Logic
+  // ==========================================
+  function openScoreModal(type, name) {
+    modalTargetType = type; modalTargetName = name;
+    const infoEl = document.getElementById('modalTargetInfo'); if(infoEl) infoEl.textContent = `${type}：${name}`;
+    const batchContainer = document.getElementById('groupBatchSelector'); if (batchContainer) batchContainer.style.display = 'none';
+    const xpContainer = document.getElementById('xpContainer'); if(xpContainer) xpContainer.style.display = 'none';
+    document.getElementById('historyContainer').style.display = 'none';
+
+    if (type === "學生") {
+      updateLevelProgress(name);
+      currentModalStudent = name; currentHistoryPage = 1; renderStudentHistory(name);
+    } else if (type === "小組") {
+      if (batchContainer) { batchContainer.style.display = 'block'; renderBatchSelector(name); }
+    }
+    
+    const teacherArea = document.getElementById('teacherControls'), confirmBtn = document.getElementById('confirmScoreBtn'), modalTitle = document.getElementById('scoreModalLabel');
+    if (teacherArea && confirmBtn) {
+        if (currentTeacher) {
+            teacherArea.style.display = 'block'; confirmBtn.style.display = 'inline-block';
+            if(modalTitle) modalTitle.textContent = "✨ 加扣分操作"; setScoreCategory("加分");
+        } else {
+            teacherArea.style.display = 'none'; confirmBtn.style.display = 'none';
+            if(modalTitle) modalTitle.textContent = "🎓 學生等級資訊";
+        }
+    }
+    new bootstrap.Modal(document.getElementById('scoreModal')).show();
+  }
+  
+  function updateLevelProgress(studentName) {
+    const xpContainer = document.getElementById('xpContainer'), xpText = document.getElementById('xpText'), xpBar = document.getElementById('xpBar'), monthlyText = document.getElementById('monthlyScoreText');
+    const student = allStudents.find(s => s["姓名"] === studentName);
+    if (!student || !titleConfig.enabled || !titleConfig.rules || titleConfig.rules.length === 0) return;
+    const currentScore = Number(student["累積分數"]) || 0; const monthScore = Number(student["本月得分"]) || 0;
+    const rules = [...titleConfig.rules].sort((a, b) => Number(a.score) - Number(b.score));
+    let currentTitleObj = { score: 0, title: "無稱號" }, nextTitleObj = null;
+    for (let i = 0; i < rules.length; i++) { if (currentScore >= Number(rules[i].score)) currentTitleObj = rules[i]; else { nextTitleObj = rules[i]; break; } }
+    
+    xpContainer.style.display = 'block';
+    if (nextTitleObj) {
+      const range = Number(nextTitleObj.score) - Number(currentTitleObj.score);
+      const percent = Math.min(100, Math.max(0, ((currentScore - Number(currentTitleObj.score)) / range) * 100));
+      xpBar.style.width = `${percent}%`; xpText.innerHTML = `目前: <strong>${currentTitleObj.title}</strong> (${currentScore}) <br><span class="text-primary">下一級還差 ${Number(nextTitleObj.score) - currentScore} 分</span>`;
+    } else {
+      xpBar.style.width = '100%'; xpText.innerHTML = `目前: <strong>${currentTitleObj.title}</strong> (${currentScore})<br>🎉 已達最高等級！`;
+    }
+    if (monthlyText) {
+       let htmlContent = `📅 本月累積：<span class="text-danger fw-bold">${monthScore}</span> 分`;
+       const myGroup = String(student["分組"]).trim();
+       let maxInGroup = -1, leaderName = "";
+       allStudents.forEach(s => { if (String(s["分組"]).trim() === myGroup) { const sMonthScore = Number(s["本月得分"])||0; if (sMonthScore > maxInGroup) { maxInGroup = sMonthScore; leaderName = s["姓名"]; } } });
+       if (maxInGroup <= 0) htmlContent += ` (本月戰鬥剛開始)`;
+       else if (monthScore >= maxInGroup) htmlContent += ` <span class="badge bg-warning text-dark">👑 組內第一</span>`;
+       else htmlContent += ` (落後 ${leaderName} ${maxInGroup - monthScore} 分)`;
+       monthlyText.innerHTML = htmlContent;
+    }
+  }
+
+  // --- Edit Log Logic ---
+  function openEditLogModal(rowIndex, name, score, item) {
+    document.getElementById('editLogRowIndex').value = rowIndex;
+    document.getElementById('editLogName').value = name;
+    document.getElementById('editLogScore').value = score;
+    document.getElementById('editLogItem').value = item;
+    new bootstrap.Modal(document.getElementById('editLogModal')).show();
+  }
+
+  function doEditLog() {
+    const r = document.getElementById('editLogRowIndex').value;
+    const n = document.getElementById('editLogName').value;
+    const s = document.getElementById('editLogScore').value;
+    const i = document.getElementById('editLogItem').value;
+    if (!n || !s || !i) { alert("請填寫完整"); return; }
+    const btn = document.querySelector('#editLogModal .btn-primary'); btn.disabled = true; btn.innerHTML = "儲存中...";
+    callApi('editLogRecord', { rowIndex: r, newName: n, newScore: s, newItem: i })
+      .then(data => {
+        allStudents = data.students||[]; allLogs = data.logs||[]; monthlyKings = data.monthlyKings||[];
+        bootstrap.Modal.getInstance(document.getElementById('editLogModal')).hide();
+        btn.disabled = false; btn.innerHTML = "儲存修改";
+        renderPage(); renderStudents();
+        alert("修改成功！");
+      })
+      .catch(e => { alert("失敗: " + e.message); btn.disabled = false; btn.innerHTML = "儲存修改"; });
+  }
+
+  // --- Lucky Draw Logic ---
+  function initLuckyDraw() {
+    const container = document.getElementById('luckyGroupSelector'); container.innerHTML = '';
+    [...allGroups].sort().forEach((group, index) => {
+      const btn = document.createElement('button'); btn.className = 'modern-btn lucky-group-btn'; btn.textContent = group;
+      btn.onclick = () => selectLuckyGroup(group, btn); container.appendChild(btn);
+      if (index === 0) selectLuckyGroup(group, btn);
+    });
+  }
+  function selectLuckyGroup(groupName, btnElement) {
+    if(btnElement) { document.querySelectorAll('.lucky-group-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
+    currentGroupStudents = allStudents.filter(s => String(s["分組"]).trim() === groupName);
+    excludedNames.clear(); renderExclusionList(); updateActiveCandidates(); resetLuckyCard();
+  }
+  function renderExclusionList() {
+    const list = document.getElementById('exclusionList'); list.innerHTML = '';
+    currentGroupStudents.forEach(stu => {
+        const item = document.createElement('div'); item.className = 'exclusion-item'; item.onclick = () => toggleExclusion(stu["姓名"], item);
+        let imgHtml = stu["圖片網址"] ? `<img src="${stu["圖片網址"]}">` : `<div class="placeholder"><i class="fas fa-user"></i></div>`;
+        item.innerHTML = `${imgHtml}<span>${stu["姓名"]}</span>`; list.appendChild(item);
+    });
+  }
+  function toggleExclusion(name, domElement) {
+    if (luckyIntervalId) return;
+    if (excludedNames.has(name)) { excludedNames.delete(name); domElement.classList.remove('excluded'); } else { excludedNames.add(name); domElement.classList.add('excluded'); }
+    updateActiveCandidates();
+  }
+  function resetExclusion() { if (luckyIntervalId) return; excludedNames.clear(); document.querySelectorAll('.exclusion-item').forEach(el => el.classList.remove('excluded')); updateActiveCandidates(); }
+  function updateActiveCandidates() {
+    activeCandidates = currentGroupStudents.filter(s => !excludedNames.has(s["姓名"])); const disabled = activeCandidates.length === 0;
+    document.getElementById('startLuckyBtn').disabled = disabled; document.getElementById('autoLuckyBtn').disabled = disabled;
+    document.getElementById('luckyName').textContent = disabled ? "名單為空" : (luckyIntervalId ? document.getElementById('luckyName').textContent : `共 ${activeCandidates.length} 人待命`);
+  }
+  function toggleLuckyDrawManual() {
+    const btn = document.getElementById('startLuckyBtn'), autoBtn = document.getElementById('autoLuckyBtn');
+    if (luckyIntervalId) { stopAnimation(); btn.innerHTML = '再抽一次'; autoBtn.disabled = false; }
+    else { if (activeCandidates.length === 0) return; startAnimation(); btn.innerHTML = '停止'; autoBtn.disabled = true; }
+  }
+  function startAutoLuckyDraw() {
+    if (activeCandidates.length === 0) return;
+    const manualBtn = document.getElementById('startLuckyBtn'), autoBtn = document.getElementById('autoLuckyBtn');
+    manualBtn.disabled = true; autoBtn.disabled = true; autoBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    startAnimation(); setTimeout(() => { stopAnimation(); manualBtn.disabled = false; autoBtn.disabled = false; autoBtn.innerHTML = '電腦搞珠'; manualBtn.innerHTML = '手動開始'; }, Math.floor(Math.random() * 3000) + 2000);
+  }
+  function startAnimation() {
+    const card = document.getElementById('luckyCard'); card.classList.add('lucky-jumping');
+    document.getElementById('luckyDefaultIcon').style.display = 'none'; document.getElementById('luckyImage').style.display = 'block';
+    luckyIntervalId = setInterval(() => { const student = activeCandidates[Math.floor(Math.random() * activeCandidates.length)]; currentLuckyStudent = student; updateLuckyCardDisplay(student); }, 80);
+  }
+  function stopAnimation() { clearInterval(luckyIntervalId); luckyIntervalId = null; document.getElementById('luckyCard').classList.remove('lucky-jumping'); if (currentLuckyStudent) openScoreModal("學生", currentLuckyStudent["姓名"]); }
+  function updateLuckyCardDisplay(student) {
+    document.getElementById('luckyName').textContent = student["姓名"];
+    if (student["圖片網址"]) { document.getElementById('luckyImage').src = student["圖片網址"]; document.getElementById('luckyImage').style.display = 'block'; document.getElementById('luckyDefaultIcon').style.display = 'none'; }
+    else { document.getElementById('luckyImage').style.display = 'none'; document.getElementById('luckyDefaultIcon').style.display = 'block'; }
+  }
+  function resetLuckyCard() { document.getElementById('luckyImage').style.display = 'none'; document.getElementById('luckyDefaultIcon').style.display = 'block'; document.getElementById('luckyName').textContent = "誰是幸運兒？"; document.getElementById('luckyCard').classList.remove('lucky-jumping'); document.getElementById('startLuckyBtn').innerHTML = '手動開始'; currentLuckyStudent = null; }
+
+  // --- Dice Logic ---
+  function selectDiceType(sides) {
+    if (isRolling) return; currentDiceMax = sides;
+    document.getElementById('selDice6').classList.toggle('active', sides === 6); document.getElementById('selDice20').classList.toggle('active', sides === 20);
+    const diceDisplay = document.getElementById('diceDisplay'), resultSpan = document.getElementById('diceResult');
+    resultSpan.innerText = "?";
+    if (sides === 6) { diceDisplay.classList.remove('dice-d20'); diceDisplay.classList.add('dice-d6'); } else { diceDisplay.classList.remove('dice-d6'); diceDisplay.classList.add('dice-d20'); }
+  }
+  function rollDice() {
+    if (isRolling) return; isRolling = true;
+    const diceDisplay = document.getElementById('diceDisplay'), resultSpan = document.getElementById('diceResult');
+    diceDisplay.classList.add('dice-shaking'); resultSpan.classList.remove('dice-pop');
+    let tempInterval = setInterval(() => { resultSpan.innerText = Math.floor(Math.random() * currentDiceMax) + 1; }, 80);
+    setTimeout(() => { clearInterval(tempInterval); diceDisplay.classList.remove('dice-shaking'); resultSpan.innerText = Math.floor(Math.random() * currentDiceMax) + 1; resultSpan.classList.add('dice-pop'); isRolling = false; }, 1500);
+  }
+
+  // --- Bible Logic ---
+  function renderBibleVerses() {
+    const currentContainer = document.getElementById('currentVerseCard'), listContainer = document.getElementById('bibleList');
+    if (!currentContainer || !listContainer || !allVerses) return;
+    currentContainer.innerHTML = ''; listContainer.innerHTML = '';
+    const now = new Date(); now.setHours(0,0,0,0);
+    let currentVerse = null, otherVerses = [];
+    const sortedVerses = [...allVerses].sort((a, b) => new Date(b["開始日期"]) - new Date(a["開始日期"]));
+    for (const v of sortedVerses) {
+      const sDateObj = new Date(v["開始日期"]), eDateObj = new Date(v["結束日期"]);
+      if (isNaN(sDateObj) || isNaN(eDateObj)) continue;
+      sDateObj.setHours(0,0,0,0); eDateObj.setHours(23,59,59,999);
+      if (!currentVerse && ((now >= sDateObj && now <= eDateObj) || String(v["高亮提示本週金句"] || "").trim() !== "")) currentVerse = v;
+      else otherVerses.push(v);
+    }
+    if (currentVerse) {
+      currentContainer.innerHTML = `<div class="bible-card-main"><div class="badge bg-warning text-dark mb-2">${currentVerse["開始日期"]} ~ ${currentVerse["結束日期"]}</div><div class="bible-text-large">${currentVerse["經文"]}</div><div class="bible-ref-large">${currentVerse["出處"]}</div></div>`;
+    } else currentContainer.innerHTML = `<div class="bible-card-main opacity-75"><h4 class="text-muted">本週暫無指定金句</h4></div>`;
+    if (otherVerses.length === 0) listContainer.innerHTML = '<div class="text-center text-muted w-100 py-4">暫無歷史金句</div>';
+    else {
+      otherVerses.forEach(v => {
+          const col = document.createElement('div'); col.className = 'col-md-6 col-lg-4';
+          col.innerHTML = `<div class="bible-card-sm"><div class="small text-muted mb-2">${v["開始日期"]} ~ ${v["結束日期"]}</div><div class="bible-text-sm">${v["經文"]}</div><div class="bible-ref-sm">— ${v["出處"]}</div></div>`;
+          listContainer.appendChild(col);
+      });
+    }
+  }
+
+  // --- Timer Logic ---
+  function toggleTimerPanel() { const panel = document.getElementById('timerPanel'); if (window.getComputedStyle(panel).display === 'none') { panel.style.display = 'flex'; stopAlarm(); } else { panel.style.display = 'none'; stopTimer(); stopAlarm(); } }
+  function applyCustomTime() { let m = parseInt(document.getElementById('timerInputMin').value)||0; let s = parseInt(document.getElementById('timerInputSec').value)||0; stopTimer(); stopAlarm(); totalSeconds = (m * 60) + s; updateTimerDisplay(); }
+  function addTime(minutes) { stopAlarm(); if (isTimerRunning) stopTimer(); totalSeconds += minutes * 60; updateTimerDisplay(); document.getElementById('timerInputMin').value = Math.floor(totalSeconds / 60); document.getElementById('timerInputSec').value = totalSeconds % 60; }
+  function resetTimer() { stopTimer(); stopAlarm(); totalSeconds = 0; updateTimerDisplay(); document.getElementById('timerInputMin').value = ''; document.getElementById('timerInputSec').value = ''; }
+  function startTimer() { if (totalSeconds === 0) applyCustomTime(); if (totalSeconds <= 0) { alert("請先輸入時間！"); return; } if (isTimerRunning) return; alarmSound.play().then(() => alarmSound.pause()).catch(() => {}); isTimerRunning = true; document.getElementById('btnStartTimer').style.display = 'none'; document.getElementById('btnPauseTimer').style.display = 'inline-block'; timerInterval = setInterval(() => { if (totalSeconds > 0) { totalSeconds--; updateTimerDisplay(); } else timeIsUp(); }, 1000); }
+  function stopTimer() { isTimerRunning = false; clearInterval(timerInterval); document.getElementById('btnStartTimer').style.display = 'inline-block'; document.getElementById('btnPauseTimer').style.display = 'none'; }
+  function updateTimerDisplay() { const m = Math.floor(totalSeconds / 60); const s = totalSeconds % 60; document.getElementById('timerDisplay').textContent = `${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`; }
+  function timeIsUp() { stopTimer(); document.querySelector('.timer-box').classList.add('bg-danger', 'text-white'); alarmSound.currentTime = 0; alarmSound.play().catch(e => console.log("Audio fail", e)); }
+  function stopAlarm() { alarmSound.pause(); alarmSound.currentTime = 0; document.querySelector('.timer-box').classList.remove('bg-danger', 'text-white'); }
+
+  // Utils
+  function startLoadingSimulation() { let p=0; progressInterval=setInterval(()=>{ if(p<95){ p+=Math.floor(Math.random()*5)+1; if(p>95)p=95; updateProgressBar(p); } },500); }
+  function updateProgressBar(p) { if(progressBar) progressBar.style.width=p+'%'; }
+  function finishLoading() { clearInterval(progressInterval); updateProgressBar(100); setTimeout(()=>{ if(loadingOverlay) { loadingOverlay.style.opacity='0'; setTimeout(()=>{loadingOverlay.style.display='none';},500); } },300); }
+  function closeImageModal() { document.getElementById('imageModal').classList.remove('show'); }
+  function openImageModal(url) { document.getElementById('expandedImage').src=url; document.getElementById('imageModal').classList.add('show'); }
+  function closeScoreModal() { bootstrap.Modal.getInstance(document.getElementById('scoreModal')).hide(); }
+  function showLoginOverlay() { document.getElementById('loginOverlay').style.display='flex'; }
+  function hideLoginOverlay() { document.getElementById('loginOverlay').style.display='none'; }
+  function toggleSort() { isSorted=!isSorted; document.getElementById('sortScoresButton').innerHTML=isSorted?'<i class="fas fa-undo"></i> 還原':'<i class="fas fa-sort-amount-down"></i> 排序'; if(isSorted)allStudents.sort((a,b)=>(b["累積分數"]||0)-(a["累積分數"]||0)); else allStudents=[...originalStudents]; renderStudents(); }
+  function showRankingModal(name, group, rank, score, img, e) { if(e){e.stopPropagation();e.preventDefault();} const b=document.getElementById('rankingModalBody'); b.innerHTML=`<div class="ranking-visuals"><div class="text-warning fs-1 me-3">${rank==='第一'?'🥇':(rank==='第二'?'🥈':'🥉')}</div>${img?`<img src="${img}" class="ranking-student-img">`:`<i class="fas fa-user-circle fa-3x text-muted"></i>`}</div><h3>${name}</h3><p class="text-muted">目前是 <strong>${group}</strong> 排名${rank}！</p><div class="ranking-score">總分：${score}</div>`; new bootstrap.Modal(document.getElementById('rankingModal')).show(); }
+  function renderBatchSelector(groupName) {
+      const grid = document.getElementById('batchGrid'), container = document.getElementById('groupBatchSelector');
+      grid.innerHTML = ''; batchExcludedSet.clear();
+      const isTeacher = (currentTeacher !== null);
+      if (isTeacher) { container.style.display='block'; } else { container.style.display='none'; }
+      const students = allStudents.filter(s => String(s["分組"]).trim() === groupName);
+      if (students.length === 0) { grid.innerHTML = '<span class="text-muted small">此小組無成員</span>'; return; }
+      students.forEach(s => {
+          const div = document.createElement('div'); div.className = 'batch-item';
+          div.onclick = () => toggleBatchItem(s["姓名"], div);
+          let imgHtml = s["圖片網址"] ? `<img src="${s["圖片網址"]}">` : `<div class="placeholder"><i class="fas fa-user"></i></div>`;
+          div.innerHTML = `${imgHtml}<div class="small">${s["姓名"]}</div>`; grid.appendChild(div);
+      });
+  }
+  function toggleBatchItem(name, el) { if (batchExcludedSet.has(name)) { batchExcludedSet.delete(name); el.classList.remove('excluded'); } else { batchExcludedSet.add(name); el.classList.add('excluded'); } }
+  function resetBatchSelection() { batchExcludedSet.clear(); document.querySelectorAll('.batch-item').forEach(el => el.classList.remove('excluded')); }
+  function openELearning() { const url = appSettings["電子溫習站超連結"]; if (url && url.startsWith("http")) window.open(url, '_blank'); else alert("⚠️ 尚未設定有效的溫習站網址"); }
+</script>
 </body>
 </html>
