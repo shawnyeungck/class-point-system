@@ -1,8 +1,7 @@
 // ==========================================
 // CONFIGURATION: GAS API URL
 // ==========================================
-// 請將下方引號內的網址換成您部署 GAS 後取得的 Web App 網址 (以 /exec 結尾)
-const API_URL = "https://script.google.com/macros/s/AKfycbyWkt5bTcX8BokqviAXoMgFaWTyU2PkqqeHy-rhGRiJlsWkkn6-wLGfdylDFWLfh-nC/exec"; 
+const API_URL = "https://script.google.com/macros/s/AKfycbyWkt5bTcX8BokqviAXoMgFaWTyU2PkqqeHy-rhGRiJlsWkkn6-wLGfdylDFWLfh-nC/exec";
 
 // ==========================================
 // API Call Helper
@@ -13,10 +12,12 @@ async function callApi(action, params = {}) {
   let options = { method: "POST" };
 
   if (isReadAction) {
+    // 讀取類操作用 GET，避免 CORS 錯誤
     const queryString = new URLSearchParams({ action: action, ...params }).toString();
     fetchUrl = `${API_URL}?${queryString}`;
     options.method = "GET";
   } else {
+    // 寫入類操作用 POST
     const payload = { action: action, ...params };
     options.body = JSON.stringify(payload);
   }
@@ -389,6 +390,7 @@ function renderLogs(groupFilter = 'all', studentFilter = 'all') {
     
     let editBtnHtml = '';
     if (currentTeacher) {
+      // 這裡將 item (項目名稱) 也傳入 openEditLogModal
       editBtnHtml = `<button class="btn btn-sm btn-outline-secondary ms-2" style="border-radius:50%;padding:2px 6px" onclick="openEditLogModal(${log.rowIndex}, '${log.student}', ${scoreNum}, '${log.item}')"><i class="fas fa-pen" style="font-size:0.7rem"></i></button>`;
     }
 
@@ -498,7 +500,6 @@ function loginTeacher() {
     currentTeacher = t;
     hideLoginOverlay();
     renderPage();
-    // Force refresh logs to show edit buttons if currently on logs tab
     if (document.querySelector('.nav-link.active').dataset.type === 'log') {
       filterLogs();
     }
@@ -628,7 +629,7 @@ function updateLevelProgress(studentName) {
   }
 }
 
-// --- Edit Log Logic (Updated) ---
+// --- Edit Log Logic (Including Item Name) ---
 function openEditLogModal(rowIndex, name, score, item) {
   document.getElementById('editLogRowIndex').value = rowIndex;
   document.getElementById('editLogName').value = name;
@@ -952,243 +953,3 @@ function stopAlarm() {
   alarmSound.currentTime = 0;
   document.querySelector('.timer-box').classList.remove('bg-danger', 'text-white');
 }
-
-// --- Utils ---
-function getGroupRankings(students) {
-  const groups = {};
-  students.forEach(s => {
-    const g = String(s["分組"]).trim() || "未分組";
-    if (!groups[g]) groups[g] = [];
-    groups[g].push(s);
-  });
-  const rankMap = {};
-  for (const g in groups) {
-    groups[g].sort((a, b) => (Number(b["累積分數"]) || 0) - (Number(a["累積分數"]) || 0));
-    let cur = 1, last = -1;
-    groups[g].forEach((s, i) => {
-      const sc = Number(s["累積分數"]) || 0;
-      if (i === 0) last = sc;
-      else if (sc < last) {
-        cur++;
-        last = sc;
-      }
-      rankMap[s["姓名"]] = cur;
-    });
-  }
-  return rankMap;
-}
-
-function getMedalHtml(type, name, group, score, imgUrl) {
-  let color = type === 'gold' ? '#FFD700' : (type === 'silver' ? '#C0C0C0' : '#CD7F32');
-  const safeImg = imgUrl ? imgUrl : '';
-  return `<div class="medal-wrapper" onclick="showRankingModal('${name}', '${group}', '${type==='gold'?'第一':(type==='silver'?'第二':'第三')}', ${score}, '${safeImg}', event)"><svg viewBox="0 0 24 30" width="100%" height="100%"><path d="M2 0h20v20l-10 10-10-10z" fill="${color}" stroke="#fff" stroke-width="1.5" /><circle cx="12" cy="10" r="6" fill="#FFF" fill-opacity="0.3" /><text x="12" y="14" font-size="10" text-anchor="middle" fill="#FFF" font-weight="bold">${type==='gold'?'1':(type==='silver'?'2':'3')}</text></svg></div>`;
-}
-
-function handleImageError(img) {
-  const c = img.parentElement;
-  img.style.display = 'none';
-  const s = document.createElement('div');
-  s.className = 'student-square';
-  s.style.background = generateRandomPastelColor();
-  c.insertBefore(s, c.firstChild);
-}
-
-function generateRandomPastelColor() {
-  return `hsl(${Math.floor(Math.random()*360)}, 70%, 80%)`;
-}
-
-function startLoadingSimulation() {
-  let p = 0;
-  progressInterval = setInterval(() => {
-    if (p < 95) {
-      p += Math.floor(Math.random() * 5) + 1;
-      if (p > 95) p = 95;
-      updateProgressBar(p);
-    }
-  }, 500);
-}
-
-function updateProgressBar(p) {
-  if (progressBar) progressBar.style.width = p + '%';
-}
-
-function finishLoading() {
-  clearInterval(progressInterval);
-  updateProgressBar(100);
-  setTimeout(() => {
-    if (loadingOverlay) {
-      loadingOverlay.style.opacity = '0';
-      setTimeout(() => {
-        loadingOverlay.style.display = 'none';
-      }, 500);
-    }
-  }, 300);
-}
-
-function closeImageModal() {
-  document.getElementById('imageModal').classList.remove('show');
-}
-
-function openImageModal(url) {
-  document.getElementById('expandedImage').src = url;
-  document.getElementById('imageModal').classList.add('show');
-}
-
-function closeScoreModal() {
-  bootstrap.Modal.getInstance(document.getElementById('scoreModal')).hide();
-}
-
-function showLoginOverlay() {
-  document.getElementById('loginOverlay').style.display = 'flex';
-}
-
-function hideLoginOverlay() {
-  document.getElementById('loginOverlay').style.display = 'none';
-}
-
-function toggleSort() {
-  isSorted = !isSorted;
-  document.getElementById('sortScoresButton').innerHTML = isSorted ? '<i class="fas fa-undo"></i> 還原' : '<i class="fas fa-sort-amount-down"></i> 排序';
-  if (isSorted) allStudents.sort((a, b) => (b["累積分數"] || 0) - (a["累積分數"] || 0));
-  else allStudents = [...originalStudents];
-  renderStudents();
-}
-
-function showRankingModal(name, group, rank, score, img, e) {
-  if (e) {
-    e.stopPropagation();
-    e.preventDefault();
-  }
-  const b = document.getElementById('rankingModalBody');
-  b.innerHTML = `<div class="ranking-visuals"><div class="text-warning fs-1 me-3">${rank==='第一'?'🥇':(rank==='第二'?'🥈':'🥉')}</div>${img?`<img src="${img}" class="ranking-student-img">`:`<i class="fas fa-user-circle fa-3x text-muted"></i>`}</div><h3>${name}</h3><p class="text-muted">目前是 <strong>${group}</strong> 排名${rank}！</p><div class="ranking-score">總分：${score}</div>`;
-  new bootstrap.Modal(document.getElementById('rankingModal')).show();
-}
-
-function renderBatchSelector(groupName) {
-  const grid = document.getElementById('batchGrid'),
-    container = document.getElementById('groupBatchSelector');
-  grid.innerHTML = '';
-  batchExcludedSet.clear();
-  const isTeacher = (currentTeacher !== null);
-  if (isTeacher) {
-    container.style.display = 'block';
-  } else {
-    container.style.display = 'none';
-  }
-  const students = allStudents.filter(s => String(s["分組"]).trim() === groupName);
-  if (students.length === 0) {
-    grid.innerHTML = '<span class="text-muted small">此小組無成員</span>';
-    return;
-  }
-  students.forEach(s => {
-    const div = document.createElement('div');
-    div.className = 'batch-item';
-    div.onclick = () => toggleBatchItem(s["姓名"], div);
-    let imgHtml = s["圖片網址"] ? `<img src="${s["圖片網址"]}">` : `<div class="placeholder"><i class="fas fa-user"></i></div>`;
-    div.innerHTML = `${imgHtml}<div class="small">${s["姓名"]}</div>`;
-    grid.appendChild(div);
-  });
-}
-
-function toggleBatchItem(name, el) {
-  if (batchExcludedSet.has(name)) {
-    batchExcludedSet.delete(name);
-    el.classList.remove('excluded');
-  } else {
-    batchExcludedSet.add(name);
-    el.classList.add('excluded');
-  }
-}
-
-function resetBatchSelection() {
-  batchExcludedSet.clear();
-  document.querySelectorAll('.batch-item').forEach(el => el.classList.remove('excluded'));
-}
-
-function openELearning() {
-  const url = appSettings["電子溫習站超連結"];
-  if (url && url.startsWith("http")) window.open(url, '_blank');
-  else alert("⚠️ 尚未設定有效的溫習站網址");
-}
-
-// Render Student History
-function renderStudentHistory(name) {
-  const container = document.getElementById('historyContainer'),
-    tbody = document.getElementById('historyTableBody');
-  const pageLabel = document.getElementById('historyPageLabel'),
-    prevBtn = document.getElementById('prevHistoryBtn'),
-    nextBtn = document.getElementById('nextHistoryBtn');
-  const myLogs = allLogs.filter(log => log.student === name);
-  if (myLogs.length === 0) {
-    container.style.display = 'none';
-    return;
-  }
-  container.style.display = 'block';
-  const totalPages = Math.ceil(myLogs.length / HISTORY_PER_PAGE);
-  if (currentHistoryPage > totalPages) currentHistoryPage = totalPages;
-  if (currentHistoryPage < 1) currentHistoryPage = 1;
-  const startIndex = (currentHistoryPage - 1) * HISTORY_PER_PAGE;
-  const pagedLogs = myLogs.slice(startIndex, startIndex + HISTORY_PER_PAGE);
-  tbody.innerHTML = '';
-  pagedLogs.forEach(log => {
-    const tr = document.createElement('tr');
-    const d = new Date(log.time);
-    const score = Number(log.score);
-    tr.innerHTML = `<td class="text-muted small">${d.getMonth()+1}/${d.getDate()}</td><td class="small text-truncate" style="max-width:100px">${log.item}</td><td class="text-end fw-bold ${score>0?'text-success':'text-danger'}">${score>0?'+':''}${score}</td>`;
-    tbody.appendChild(tr);
-  });
-  pageLabel.textContent = `${currentHistoryPage} / ${totalPages}`;
-  prevBtn.disabled = (currentHistoryPage === 1);
-  nextBtn.disabled = (currentHistoryPage === totalPages);
-}
-
-function changeHistoryPage(d) {
-  currentHistoryPage += d;
-  renderStudentHistory(currentModalStudent);
-}
-
-function setScoreCategory(c) {
-  currentScoreCategory = c;
-  document.getElementById('addPointsBtn').style.opacity = c === "加分" ? 1 : 0.5;
-  document.getElementById('deductPointsBtn').style.opacity = c === "扣分" ? 1 : 0.5;
-  const s = document.getElementById('itemSelect');
-  s.innerHTML = "";
-  allItems.filter(it => it["加扣分"] === c).forEach(it => {
-    const o = document.createElement('option');
-    o.value = it["項目名稱"];
-    o.textContent = it["項目名稱"];
-    s.appendChild(o);
-  });
-  updateScoreOptions();
-}
-
-function updateScoreOptions() {
-  const s = document.getElementById('scoreSelect');
-  s.innerHTML = "";
-  (currentScoreCategory === "加分" ? [1, 2, 3, 4, 5] : [1, 2, 3, 5, 7]).forEach(v => {
-    const o = document.createElement('option');
-    o.value = v;
-    o.textContent = `${currentScoreCategory} ${v} 分`;
-    s.appendChild(o);
-  });
-  const c = document.createElement('option');
-  c.value = 'custom';
-  c.textContent = '✏️ 自行輸入數值...';
-  s.appendChild(c);
-  toggleCustomInput();
-}
-
-function toggleCustomInput() {
-  const v = document.getElementById('scoreSelect').value,
-    i = document.getElementById('customScoreInput');
-  if (v === 'custom') {
-    i.style.display = 'block';
-    i.value = '';
-    i.focus();
-  } else {
-    i.style.display = 'none';
-  }
-}
-</script>
-</body>
-</html>
