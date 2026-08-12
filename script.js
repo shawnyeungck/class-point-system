@@ -2,6 +2,8 @@
 // CONFIGURATION: GAS API URL
 // ==========================================
 const API_URL = "https://script.google.com/macros/s/AKfycbyWkt5bTcX8BokqviAXoMgFaWTyU2PkqqeHy-rhGRiJlsWkkn6-wLGfdylDFWLfh-nC/exec";
+const API_TIMEOUT_MS = 15000;
+const API_MAX_ATTEMPTS = 3;
 
 // ==========================================
 // API Call Helper
@@ -22,10 +24,50 @@ async function callApi(action, params = {}) {
     options.body = JSON.stringify(payload);
   }
 
-  const response = await fetch(fetchUrl, options);
-  const data = await response.json();
-  if (data.error) throw new Error(data.error);
-  return data;
+  const maxAttempts = isReadAction ? API_MAX_ATTEMPTS : 1;
+  let lastError = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await fetchWithTimeout(fetchUrl, options, API_TIMEOUT_MS);
+      const text = await response.text();
+      let data = {};
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch (parseError) {
+          throw buildApiError(action, response.status, "API 回傳不是有效 JSON");
+        }
+      }
+      if (!response.ok) {
+        throw buildApiError(action, response.status, data.error || data.message || response.statusText || "HTTP 錯誤");
+      }
+      if (data.error || data.status === 'error') throw buildApiError(action, response.status, data.error || data.message || "API 回傳錯誤");
+      return data;
+    } catch (error) {
+      lastError = error;
+      const canRetry = isReadAction && attempt < maxAttempts && (!error.httpStatus || error.httpStatus >= 500);
+      if (!canRetry) break;
+      await delay(700 * attempt);
+    }
+  }
+  throw lastError || buildApiError(action, 0, "未知連線錯誤");
+}
+
+function fetchWithTimeout(url, options, timeoutMs) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, Object.assign({}, options, { signal: controller.signal }))
+    .finally(() => clearTimeout(timer));
+}
+
+function buildApiError(action, httpStatus, message) {
+  const error = new Error(`API ${action} 失敗${httpStatus ? ` (HTTP ${httpStatus})` : ""}：${message}`);
+  error.httpStatus = httpStatus;
+  return error;
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 // ==========================================
